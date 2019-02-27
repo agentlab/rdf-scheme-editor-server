@@ -3,6 +3,8 @@
 ex:Picasso a ex:Artist ;
 	foaf:firstName "Pablo";
 	foaf:surname "Picasso";
+	foaf:birthday "25-10";
+	foaf:age "91";
 	ex:creatorOf ex:guernica;
 	ex:homeAddress _:node1.
 
@@ -17,6 +19,8 @@ ex:guernica a ex:Painting;
 ex:VanGogh a ex:Artist;
             foaf:firstName "Vincent";
             foaf:surname "van Gogh";
+            foaf:birthday "30-03";
+            foaf:age "37";
             ex:creatorOf ex:starryNight, ex:sunflowers, ex:potatoEaters.
 
 ex:starryNight a ex:Painting;
@@ -34,7 +38,10 @@ ex:potatoEaters a ex:Painting;
 ex:Vasya a ex:Artist;
 	    foaf:firstName "Vasya";
 	    foaf:surname "Lozkin";
-	    ex:creatorOf ex: Rossia.
+	    foaf:birthday "18-08";
+        foaf:age "42";
+	    ex:creatorOf ex:Rossia;
+	    foaf:homepage "http://vasya-lozhkin.ru/".
 
 ex:Rossia a ex:Painting;
 	    rdfs:label "Velikaya i prekrasnaya Rossiya";

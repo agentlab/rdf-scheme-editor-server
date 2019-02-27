@@ -52,7 +52,8 @@ public class Example16SPARQLConstructQuery {
 			queryString += "CONSTRUCT \n";
 			queryString += "WHERE { \n";
 			queryString += "    ?s a ex:Artist; \n";
-			queryString += "       foaf:firstName ?n .";
+			queryString += "       foaf:firstName ?n;";
+			queryString += "	   foaf:homepage ?p .";
 			queryString += "}";
 
 			GraphQuery query = conn.prepareGraphQuery(queryString);
