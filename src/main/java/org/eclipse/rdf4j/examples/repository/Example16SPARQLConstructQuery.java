@@ -7,8 +7,12 @@
  *******************************************************************************/
 package org.eclipse.rdf4j.examples.repository;
 
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.FOAF;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.XMLSchema;
 import org.eclipse.rdf4j.query.*;
 import org.eclipse.rdf4j.repository.Repository;
@@ -45,14 +49,28 @@ public class Example16SPARQLConstructQuery {
 				conn.add(input, "", RDFFormat.TURTLE );
 			}
 
+			ValueFactory vf = SimpleValueFactory.getInstance();
+			String ex = "http://example.org/";
+			IRI artist = vf.createIRI(ex, "Artist");
+
+			IRI lozhkin = vf.createIRI(ex, "Lozhkin");
+			conn.add(lozhkin, RDF.TYPE, artist);
+			conn.add(lozhkin, FOAF.FIRST_NAME, vf.createLiteral("Vasya"));
+			conn.add(lozhkin, FOAF.SURNAME,vf.createLiteral("Lozhkin"));
+
 			// We do a simple SPARQL CONSTRUCT-query that retrieves all statements about artists,
 			// and their first names.
 			String queryString = "PREFIX ex: <http://example.org/> \n";
 			queryString += "PREFIX foaf: <" + FOAF.NAMESPACE + "> \n";
 			queryString += "CONSTRUCT \n";
 			queryString += "WHERE { \n";
-			queryString += "    ?s a ex:Artist; \n";
-			queryString += "       foaf:firstName ?n .";
+			queryString += "    ?s a ex:Artist. \n";
+			queryString += "    ?s foaf:firstName ?firstName. \n";
+            queryString += "    ?s foaf:surname ?surname. \n";
+            queryString += "    ?s ex:creatorOf ?picture. \n";
+            queryString += "    ?picture a ex:Painting. \n";
+			queryString += "    ?picture ex:technique ?technique. \n";
+			queryString += "    ?picture rdfs:label ?label. \n";
 			queryString += "}";
 
 			GraphQuery query = conn.prepareGraphQuery(queryString);
