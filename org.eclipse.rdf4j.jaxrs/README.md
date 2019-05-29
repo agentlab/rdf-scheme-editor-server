@@ -25,3 +25,7 @@
 
 * display
 * log:set DEBUG
+
+```
+type=memory&Repository+ID=test55&Repository+title=&Persist=true&Sync+delay=0&EvaluationStrategyFactory=org.eclipse.rdf4j.query.algebra.evaluation.impl.StrictEvaluationStrategyFactory
+```
