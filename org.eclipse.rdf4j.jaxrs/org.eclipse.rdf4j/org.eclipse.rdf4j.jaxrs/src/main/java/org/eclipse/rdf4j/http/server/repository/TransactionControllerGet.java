@@ -4,7 +4,7 @@ import org.eclipse.rdf4j.http.protocol.Protocol;
 import org.eclipse.rdf4j.http.protocol.Protocol.*;
 import org.eclipse.rdf4j.http.server.ClientHTTPException;
 import org.eclipse.rdf4j.http.server.ProtocolUtil;
-import org.eclipse.rdf4j.http.server.repository.statements.ExportStatementsView;
+import org.eclipse.rdf4j.http.server.transaction.ActiveTransactionRegistry;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
@@ -91,12 +91,12 @@ public class TransactionControllerGet {
         RDFWriterFactory rdfWriterFactory = ProtocolUtil.getAcceptableService(request, response, RDFWriterRegistry.getInstance());
 
         Map<String, Object> model = new HashMap<String, Object>();
-        model.put(ExportStatementsView.SUBJECT_KEY, subj);
-        model.put(ExportStatementsView.PREDICATE_KEY, pred);
-        model.put(ExportStatementsView.OBJECT_KEY, obj);
-        model.put(ExportStatementsView.CONTEXTS_KEY, contexts);
-        model.put(ExportStatementsView.USE_INFERENCING_KEY, useInferencing);
-        model.put(ExportStatementsView.FACTORY_KEY, rdfWriterFactory);
+//        model.put(ExportStatementsView.SUBJECT_KEY, subj);
+//        model.put(ExportStatementsView.PREDICATE_KEY, pred);
+//        model.put(ExportStatementsView.OBJECT_KEY, obj);
+//        model.put(ExportStatementsView.CONTEXTS_KEY, contexts);
+//        model.put(ExportStatementsView.USE_INFERENCING_KEY, useInferencing);
+//        model.put(ExportStatementsView.FACTORY_KEY, rdfWriterFactory);
     }
 
 }

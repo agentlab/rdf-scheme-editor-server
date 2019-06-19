@@ -1,10 +1,9 @@
 package org.eclipse.rdf4j.http.server.repository;
 
-
 import org.eclipse.rdf4j.http.protocol.Protocol;
 import org.eclipse.rdf4j.http.protocol.Protocol.*;
-import org.eclipse.rdf4j.common.webapp.views.SimpleResponseView;
-import org.eclipse.rdf4j.http.server.repository.statements.ExportStatementsView;
+import org.eclipse.rdf4j.http.server.transaction.ActiveTransactionRegistry;
+import org.eclipse.rdf4j.http.server.ClientHTTPException;
 import org.eclipse.rdf4j.http.server.ProtocolUtil;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -15,7 +14,6 @@ import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -24,13 +22,8 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
-
 import java.util.HashMap;
 import java.util.Map;
-
-
-
-import static org.springframework.web.servlet.support.WebContentGenerator.METHOD_HEAD;
 
 
 @Component(service = TransactionControllerSize.class, property = {"osgi.jaxrs.resource=true"})
@@ -76,13 +69,13 @@ public class TransactionControllerSize {
 
     private void getSize(RepositoryConnection conn, String txnId, HttpServletRequest request
                          )
-            throws WebApplicationException {
+            throws WebApplicationException, ClientHTTPException {
         try {
             ProtocolUtil.logRequestParameters(request);
 
             Map<String, Object> model = new HashMap<String, Object>();
-            model.put(ExportStatementsView.HEADERS_ONLY, METHOD_HEAD.equals(request.getMethod()));
-            final boolean headersOnly = METHOD_HEAD.equals(request.getMethod());
+//            model.put(ExportStatementsView.HEADERS_ONLY, METHOD_HEAD.equals(request.getMethod()));
+            final boolean headersOnly = false;//METHOD_HEAD.equals(request.getMethod());
 
 
             if (!headersOnly) {
@@ -99,7 +92,7 @@ public class TransactionControllerSize {
                 } catch (RepositoryException e) {
                     throw new WebApplicationException("Repository error: " + e.getMessage(), e);
                 }
-                model.put(SimpleResponseView.CONTENT_KEY, String.valueOf(size));
+//                model.put(SimpleResponseView.CONTENT_KEY, String.valueOf(size));
             }
         } finally {
             ActiveTransactionRegistry.INSTANCE.returnTransactionConnection(txnId);
