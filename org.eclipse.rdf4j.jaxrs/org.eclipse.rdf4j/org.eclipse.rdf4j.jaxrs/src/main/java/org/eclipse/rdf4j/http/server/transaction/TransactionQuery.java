@@ -5,6 +5,7 @@ import org.eclipse.rdf4j.http.protocol.Protocol;
 import org.eclipse.rdf4j.http.protocol.Protocol.*;
 import org.eclipse.rdf4j.http.protocol.error.ErrorInfo;
 import org.eclipse.rdf4j.http.protocol.error.ErrorType;
+import org.eclipse.rdf4j.http.server.ClientHTTPException;
 import org.eclipse.rdf4j.http.server.HTTPException;
 import org.eclipse.rdf4j.http.server.ProtocolUtil;
 import org.eclipse.rdf4j.model.IRI;
@@ -75,7 +76,7 @@ public class TransactionQuery {
 
     private void processQuery(RepositoryConnection conn, String txnId, HttpServletRequest request,
                               HttpServletResponse response)
-            throws IOException, WebApplicationException {
+            throws IOException, WebApplicationException, ClientHTTPException {
         String queryStr = null;
         final String contentType = request.getContentType();
         if (contentType != null && contentType.contains(Protocol.SPARQL_QUERY_MIME_TYPE)) {
@@ -118,7 +119,7 @@ public class TransactionQuery {
 
     private Query getQuery(RepositoryConnection repositoryCon, String queryStr, HttpServletRequest request,
                            HttpServletResponse response)
-            throws IOException, WebApplicationException {
+            throws IOException, WebApplicationException, ClientHTTPException {
         Query result = null;
 
         // default query language is SPARQL
