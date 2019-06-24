@@ -4,8 +4,21 @@ import static org.junit.Assert.*;
 import static org.ops4j.pax.exam.CoreOptions.*;
  
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 
+import jdk.nashorn.internal.ir.annotations.Reference;
+import org.eclipse.rdf4j.http.server.repository.RepositoryConfigController;
+import org.eclipse.rdf4j.http.server.transaction.ActiveTransactionRegistry;
+import org.eclipse.rdf4j.http.server.transaction.TransactionControllerRollback;
+import org.eclipse.rdf4j.http.server.transaction.TransactionControllerUpdate;
+import org.eclipse.rdf4j.query.Update;
+import org.eclipse.rdf4j.repository.Repository;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
+import org.eclipse.rdf4j.repository.config.ConfigTemplate;
+import org.eclipse.rdf4j.repository.config.RepositoryConfig;
 import org.eclipse.rdf4j.repository.manager.RepositoryManager;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.ops4j.pax.exam.Configuration;
@@ -17,7 +30,17 @@ import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.features;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Vector;
 
 import org.apache.karaf.itests.KarafTestSupport;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
@@ -54,7 +77,8 @@ public class SampleTest extends KarafTestSupport {
             logLevel(LogLevelOption.LogLevel.INFO),
             mavenBundle().groupId("org.awaitility").artifactId("awaitility").versionAsInProject(),
             mavenBundle().groupId("org.apache.servicemix.bundles").artifactId("org.apache.servicemix.bundles.hamcrest").versionAsInProject(),
-            mavenBundle().groupId("org.apache.karaf.itests").artifactId("common").versionAsInProject(),
+                mavenBundle().groupId("org.apache.karaf.itests").artifactId("common").versionAsInProject(),
+            //    mavenBundle().groupId("org.mockito").artifactId("mockito-core").version("2.23.4"),
             features(maven().groupId("ru.agentlab.rdf4j.server")
             	.artifactId("ru.agentlab.rdf4j.server.features").type("xml")
                	.version("0.0.1-SNAPSHOT"), "org.eclipse.rdf4j.jaxrs"),
@@ -88,5 +112,111 @@ public class SampleTest extends KarafTestSupport {
         assertNotNull(manager);
         System.out.println("Size=" + manager.getAllRepositories().size());
         System.out.println("Location=" + manager.getLocation());
+    }
+
+    /*@Test
+    public void update() {
+        String trId = new String("1111");
+        RepositoryManager manager = getOsgiService(RepositoryManager.class);
+        RepositoryConnection conn = getOsgiService(RepositoryConnection.class);
+        //RepositoryConnection conn = mock(RepositoryConnection.class);
+        Update update = getOsgiService(Update.class);
+        //Update update = mock(Update.class);
+        when(conn.prepareUpdate(any(), any(), any())).thenReturn(update);
+
+        ActiveTransactionRegistry.INSTANCE.register(trId, conn);
+
+        TransactionControllerUpdate controller = new TransactionControllerUpdate();
+        HttpServletRequest req = mock(HttpServletRequest.class);
+        when(req.getParameter("action")).thenReturn("UPDATE");
+        when(req.getParameterNames()).thenReturn(new Vector<String>().elements());
+
+        try {
+            controller.handleRequestInternal(req, "repId", trId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Exception occurs");
+        }
+    }*/
+
+    @Test
+    public void rollback() throws IOException {
+        executeCommand("bundle:dynamic-import 75");
+        executeCommand("bundle:dynamic-import 175");
+        RepositoryConfigController rcc = getOsgiService(RepositoryConfigController.class);
+        String repId = "id128";
+        ConfigTemplate ct = rcc.getConfigTemplate("memory");
+        System.out.println("ConfigTemplate: " + ct);
+
+        Map<String, String> queryParams = new HashMap<>();
+        queryParams.put("Repository ID", repId);
+        String strConfTemplate = ct.render(queryParams);
+        System.out.println("ConfigTemplate render: " + strConfTemplate);
+        System.out.println("------------------------------");
+        System.out.println(strConfTemplate);
+        RepositoryConfig rc = rcc.updateRepositoryConfig(strConfTemplate);
+
+        RepositoryManager manager = getOsgiService(RepositoryManager.class);
+        //for (Repository repository : manager.getAllRepositories()) System.out.println(repository);
+        //manager.init();
+        Repository repository = manager.getRepository("id128");
+        RepositoryConnection repositoryConnection = repository.getConnection();
+
+        repositoryConnection.begin();
+
+
+
+        ActiveTransactionRegistry.INSTANCE.register("1234",repositoryConnection);
+        TransactionControllerRollback controller = new TransactionControllerRollback();
+
+        //HttpServletRequest req = mock(HttpServletRequest.class);
+        //when(req.getParameter("action")).thenReturn(null);
+
+        String restLocation = "http://localhost:8181/rdf4j2-server/repositories/rpo13/transactions/1234";
+        URL url = null;
+        try {
+            url = new URL(restLocation);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        try {
+            connection.setRequestMethod("DELETE");
+
+        } catch (ProtocolException e) {
+            e.printStackTrace();
+        }
+        connection.connect();
+
+        if (connection.getResponseCode() == 201) {
+//            BufferedReader buffer = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+//            String line;
+//            StringBuilder sb = new StringBuilder();
+//            while ((line = buffer.readLine())!= null) {
+//                sb.append(line);
+//            }
+//            connection
+            System.out.println("Транзакция откатана успешно! " + connection.getResponseCode());
+        } else {
+            System.err.println("Ошибка отката транзакции! " + connection.getResponseCode());
+        }
+
+//        try {
+//            controller.handleRequestInternal(req, "repId", "1234");
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            fail("Exception occurs");
+//        }
+        try {
+            ActiveTransactionRegistry.INSTANCE.deregister("1234");
+            fail();
+        } catch (Exception e){
+            assertEquals(e, new RepositoryException());
+        }
+        connection.disconnect();
+        repositoryConnection.close();
+        //ActiveTransactionRegistry.INSTANCE.deregister("1234");
+        //Assert.fail(ActiveTransactionRegistry.INSTANCE.getTransactionConnection("1234"));
     }
 }
