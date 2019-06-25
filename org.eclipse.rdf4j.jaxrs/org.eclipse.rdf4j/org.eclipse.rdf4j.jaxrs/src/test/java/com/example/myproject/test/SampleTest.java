@@ -5,6 +5,8 @@ import static org.ops4j.pax.exam.CoreOptions.*;
  
 import javax.inject.Inject;
 
+import org.eclipse.rdf4j.http.server.repository.RepositoryConfigController;
+import org.eclipse.rdf4j.http.server.repository.RepositoryController;
 import org.eclipse.rdf4j.repository.manager.RepositoryManager;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -73,7 +75,6 @@ public class SampleTest extends KarafTestSupport {
         installAndAssertFeature("scr");
         
         //installAndAssertFeature("org.eclipse.rdf4j.jaxrs");
-        
      // testing a command execution
         String bundles = executeCommand("bundle:list -t 0");
         System.out.println(bundles);
@@ -88,5 +89,11 @@ public class SampleTest extends KarafTestSupport {
         assertNotNull(manager);
         System.out.println("Size=" + manager.getAllRepositories().size());
         System.out.println("Location=" + manager.getLocation());
+    }
+    
+    @Test
+    public void createRepo() throws Exception{
+    	RepositoryController repositoryController = getOsgiService(RepositoryController.class);
+//    	repositoryController.createRep(body, repId, headers);
     }
 }

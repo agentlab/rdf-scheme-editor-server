@@ -7,24 +7,43 @@
  *******************************************************************************/
 package org.eclipse.rdf4j.http.server.repository;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.http.HttpStatus;
+import org.apache.http.util.ByteArrayBuffer;
 import org.eclipse.rdf4j.RDF4JException;
 import org.eclipse.rdf4j.http.protocol.Protocol;
+import org.eclipse.rdf4j.http.server.HTTPException;
+import org.eclipse.rdf4j.http.server.ServerHTTPException;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.repository.config.RepositoryConfig;
+import org.eclipse.rdf4j.repository.config.RepositoryConfigUtil;
 import org.eclipse.rdf4j.repository.manager.RepositoryManager;
 import org.eclipse.rdf4j.repository.manager.SystemRepository;
+import org.eclipse.rdf4j.rio.RDFParseException;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
@@ -58,7 +77,36 @@ public class RepositoryController  {
 		System.out.println("RepositoryController.get");
 		System.out.println("repId=" + repId);
 		System.out.println("query=" + query);
+		
 		return true;
+	}
+	@PUT
+	@Path("/repositories/{repId}")
+//    @Produces({"application/json", "application/sparql-results+json"})
+	public void createRep(/*String body, */@PathParam("repId") String repId/*, @Context HttpHeaders headers*/) throws Exception {
+		logger.info("PUT request invoked for repository '" + repId + "'");
+		System.out.println("PUT request");
+		/*String contentType = headers.getHeaderString(HttpHeaders.CONTENT_TYPE);
+		try {
+			InputStream in = new ByteArrayInputStream(body.getBytes("UTF-8"));
+			Model model = Rio.parse(in, " ",Rio.getParserFormatForMIMEType(contentType).orElseThrow(() -> 
+					new HTTPException(HttpStatus.SC_BAD_REQUEST,
+					"unrecognized content type " + contentType)));
+			RepositoryConfig config = RepositoryConfigUtil.getRepositoryConfig(model, repId);
+			repositoryManager.addRepositoryConfig(config);
+		} catch (RDFParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedRDFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (HTTPException e) {
+			throw new ServerHTTPException("Repository create error: " + e.getMessage(), e);
+			// TODO Auto-generated catch block
+		}*/
 	}
 	
 	@POST
