@@ -87,7 +87,34 @@ public class RepositoryController  {
 		System.out.println("query=" + query);
 		return true;
 	}
-	
+		@PUT
+	@Path("/repositories/{repId}")
+//    @Produces({"application/json", "application/sparql-results+json"})
+	public void createRep(/*String body, */@PathParam("repId") String repId/*, @Context HttpHeaders headers*/) throws Exception {
+		logger.info("PUT request invoked for repository '" + repId + "'");
+		System.out.println("PUT request");
+		/*String contentType = headers.getHeaderString(HttpHeaders.CONTENT_TYPE);
+		try {
+			InputStream in = new ByteArrayInputStream(body.getBytes("UTF-8"));
+			Model model = Rio.parse(in, " ",Rio.getParserFormatForMIMEType(contentType).orElseThrow(() -> 
+					new HTTPException(HttpStatus.SC_BAD_REQUEST,
+					"unrecognized content type " + contentType)));
+			RepositoryConfig config = RepositoryConfigUtil.getRepositoryConfig(model, repId);
+			repositoryManager.addRepositoryConfig(config);
+		} catch (RDFParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedRDFormatException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (HTTPException e) {
+			throw new ServerHTTPException("Repository create error: " + e.getMessage(), e);
+			// TODO Auto-generated catch block
+		}*/
+	}
 	@DELETE
 	@Path("/repositories/{repId}")
     @Produces({"application/json", "application/sparql-results+json"})
