@@ -50,7 +50,7 @@
 		<opencsv.version>4.3.2</opencsv.version>
 		<spatial4j.version>0.7</spatial4j.version>
 		
-		<rdf4j.version>3.0-SNAPSHOT</rdf4j.version>
+		<rdf4j.version>3.0.0-SNAPSHOT</rdf4j.version>
 		<rdf4j.server.version>3.0.0-SNAPSHOT</rdf4j.server.version>
 		
 		<lucene.version>7.5.0</lucene.version>
