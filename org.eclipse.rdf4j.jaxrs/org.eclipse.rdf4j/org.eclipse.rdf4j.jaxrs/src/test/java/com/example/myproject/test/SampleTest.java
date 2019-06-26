@@ -216,7 +216,5 @@ public class SampleTest extends KarafTestSupport {
         }
         connection.disconnect();
         repositoryConnection.close();
-        //ActiveTransactionRegistry.INSTANCE.deregister("1234");
-        //Assert.fail(ActiveTransactionRegistry.INSTANCE.getTransactionConnection("1234"));
     }
 }
