@@ -44,6 +44,10 @@ public class NamespaceController {
 		System.out.println("NamespaceController started");
 	}
 	
+	
+	
+	
+	
 	private void createRepoConfig(RepositoryConfigController rcc, String repId) throws RDF4JException, IOException {
 		ConfigTemplate ct = rcc.getConfigTemplate("native");
 		System.out.println("ConfigTemplate: " + ct);
