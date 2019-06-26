@@ -1,10 +1,19 @@
 package com.example.myproject.test;
  
-import static org.junit.Assert.*;
-import static org.ops4j.pax.exam.CoreOptions.*;
- 
-import javax.inject.Inject;
+import static org.junit.Assert.assertNotNull;
+import static org.ops4j.pax.exam.CoreOptions.junitBundles;
+import static org.ops4j.pax.exam.CoreOptions.maven;
+import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.configureSecurity;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.features;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.karafDistributionConfiguration;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.keepRuntimeFolder;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.logLevel;
 
+import java.io.File;
+
+import org.apache.karaf.itests.KarafTestSupport;
 import org.eclipse.rdf4j.repository.manager.RepositoryManager;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,12 +24,6 @@ import org.ops4j.pax.exam.karaf.options.LogLevelOption;
 import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.features;
-
-import java.io.File;
-
-import org.apache.karaf.itests.KarafTestSupport;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
 
 
 @RunWith(PaxExam.class)
