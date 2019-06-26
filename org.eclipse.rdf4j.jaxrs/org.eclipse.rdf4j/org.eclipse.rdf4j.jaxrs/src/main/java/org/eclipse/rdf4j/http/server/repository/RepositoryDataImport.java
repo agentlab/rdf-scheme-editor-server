@@ -65,34 +65,25 @@ public class RepositoryDataImport {
 	public void importDocuments(InputStream input) throws WebApplicationException, IOException{
 		System.out.println("Handle data");		
 		
-		String path = "/rdf4j2-server/repositories/import";
+		String path = "/rdf4j2-server/repositories/import/";
 		try {
 			System.out.println("Import data");
 			int read = 0;
-			byte[] bytes = new byte[1024];
-			File file = null;
-			try {
-			file = new File(path, "Test.txt");
-			boolean created = file.createNewFile();
-            if(created)
-                System.out.println("File has been created");
-			}
-			catch (IOException e) {
-				System.out.println("Error! File doesn't create");
-			}
-			FileOutputStream fop = null;
-			try {
-				fop = new FileOutputStream(file);
-				while ((read = input.read(bytes)) != -1) {				
-					System.out.println("Read bytes!!!");
-					fop.write(input.read(bytes));
-				}
-			}
-			catch (IOException e) {
-				System.out.println("Error! Write to file exception");
-			}			
-			fop.close();
-		} catch (RDF4JException e) {
+			byte[] bytes = new byte[input.available()];
+			String fileLocation = path + "test.docx";  
+             //saving file  
+	     try {  
+	         FileOutputStream out = new FileOutputStream(new File(fileLocation));          
+	         out = new FileOutputStream(new File(fileLocation));  
+	         while ((read = input.read(bytes)) != -1) {  
+	             out.write(bytes, 0, read);  
+	         }  
+	         out.flush();  
+	         out.close();  
+	     } catch (IOException e) {e.printStackTrace();}  
+	     String output = "File successfully uploaded to : " + fileLocation;  
+		} 
+		catch (RDF4JException e) {
 			logger.error("error while attempting to get template '", e);
 			throw new WebApplicationException("error while attempting to get template: " + e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
 		} 
