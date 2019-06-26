@@ -9,8 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import jdk.nashorn.internal.ir.annotations.Reference;
 import org.eclipse.rdf4j.http.server.repository.RepositoryConfigController;
 import org.eclipse.rdf4j.http.server.transaction.ActiveTransactionRegistry;
-import org.eclipse.rdf4j.http.server.transaction.TransactionControllerRollback;
-import org.eclipse.rdf4j.http.server.transaction.TransactionControllerUpdate;
+import org.eclipse.rdf4j.http.server.transaction.TransactionControllerGet;
 import org.eclipse.rdf4j.query.Update;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -140,7 +139,7 @@ public class SampleTest extends KarafTestSupport {
     }*/
 
     @Test
-    public void rollback() throws IOException {
+    public void getChanges() throws IOException {
         executeCommand("bundle:dynamic-import 75");
         executeCommand("bundle:dynamic-import 175");
         RepositoryConfigController rcc = getOsgiService(RepositoryConfigController.class);
@@ -167,7 +166,7 @@ public class SampleTest extends KarafTestSupport {
 
 
         ActiveTransactionRegistry.INSTANCE.register("1234",repositoryConnection);
-        TransactionControllerRollback controller = new TransactionControllerRollback();
+        TransactionControllerGet controller = new TransactionControllerGet();
 
         //HttpServletRequest req = mock(HttpServletRequest.class);
         //when(req.getParameter("action")).thenReturn(null);
@@ -180,43 +179,16 @@ public class SampleTest extends KarafTestSupport {
             e.printStackTrace();
         }
 
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        HttpServletRequest connection = (HttpServletRequest) url.openConnection();
         try {
-            connection.setRequestMethod("DELETE");
-
-        } catch (ProtocolException e) {
+            controller.handleRequestInternal(connection,"rpo13","1234");
+            
+        } catch (Exception e) {
             e.printStackTrace();
+            fail("Exception occurs");
+            repositoryConnection.close();
         }
-        connection.connect();
-
-        if (connection.getResponseCode() == 201) {
-//            BufferedReader buffer = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-//            String line;
-//            StringBuilder sb = new StringBuilder();
-//            while ((line = buffer.readLine())!= null) {
-//                sb.append(line);
-//            }
-//            connection
-            System.out.println("Транзакция откатана успешно! " + connection.getResponseCode());
-        } else {
-            System.err.println("Ошибка отката транзакции! " + connection.getResponseCode());
-        }
-
-//        try {
-//            controller.handleRequestInternal(req, "repId", "1234");
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            fail("Exception occurs");
-//        }
-        try {
-            ActiveTransactionRegistry.INSTANCE.deregister("1234");
-            fail();
-        } catch (Exception e){
-            assertEquals(e, new RepositoryException());
-        }
-        connection.disconnect();
+        
         repositoryConnection.close();
-        //ActiveTransactionRegistry.INSTANCE.deregister("1234");
-        //Assert.fail(ActiveTransactionRegistry.INSTANCE.getTransactionConnection("1234"));
     }
 }
