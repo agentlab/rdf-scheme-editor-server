@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
 @Component(service = RepositoryConfigController.class, property = { "osgi.jaxrs.resource=true" })
 @Path("/rdf4j2-server")
 public class RepositoryConfigController {
-	private final Logger logger = LoggerFactory.getLogger(this.getClass());
+	final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Reference
 	private RepositoryManager repositoryManager;
@@ -109,7 +109,7 @@ public class RepositoryConfigController {
 		return true;
 	}
 	
-	RepositoryConfig updateRepositoryConfig(final String configString) throws IOException, RDF4JException {
+	private RepositoryConfig updateRepositoryConfig(final String configString) throws IOException, RDF4JException {
 		final Model graph = new LinkedHashModel();
 		final RDFParser rdfParser = Rio.createParser(RDFFormat.TURTLE, SimpleValueFactory.getInstance());
 		rdfParser.setRDFHandler(new StatementCollector(graph));
@@ -133,7 +133,7 @@ public class RepositoryConfigController {
 		
 		return repConfig;
 	}
-	ConfigTemplate getConfigTemplate(final String type) throws IOException {
+	private ConfigTemplate getConfigTemplate(final String type) throws IOException {
 		try (InputStream ttlInput = RepositoryConfig.class.getResourceAsStream(type + ".ttl")) {
 			final String template = IOUtil.readString(new InputStreamReader(ttlInput, "UTF-8"));
 			return new ConfigTemplate(template);
