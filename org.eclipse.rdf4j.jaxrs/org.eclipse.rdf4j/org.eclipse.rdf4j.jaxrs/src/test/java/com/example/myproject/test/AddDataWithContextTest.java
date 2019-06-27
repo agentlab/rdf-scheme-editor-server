@@ -1,9 +1,12 @@
 package com.example.myproject.test;
 
 import org.apache.karaf.itests.KarafTestSupport;
+import org.eclipse.rdf4j.http.server.repository.RepositoryConfigController;
 import org.eclipse.rdf4j.http.server.repository.StatementsComponent;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.config.ConfigTemplate;
+import org.eclipse.rdf4j.repository.config.RepositoryConfig;
 import org.eclipse.rdf4j.repository.manager.RepositoryManager;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,6 +20,8 @@ import org.ops4j.pax.exam.spi.reactors.PerClass;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.Assert.assertNotEquals;
 import static org.ops4j.pax.exam.CoreOptions.*;
@@ -71,6 +76,26 @@ public class AddDataWithContextTest extends KarafTestSupport {
     public void TestCreateRepo() {
         StatementsComponent component = getOsgiService(StatementsComponent.class);
         RepositoryManager manager = getOsgiService(RepositoryManager.class);
+        RepositoryConfigController rcc = getOsgiService(RepositoryConfigController.class);
+
+        ConfigTemplate ct = null;
+        try {
+            ct = rcc.getConfigTemplate("native");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("ConfigTemplate: " + ct);
+
+        Map<String, String> queryParams = new HashMap<>();
+        queryParams.put("Repository ID", "id322322");
+        String strConfTemplate = ct.render(queryParams);
+        System.out.println("ConfigTemplate render: " + strConfTemplate);
+        try {
+            RepositoryConfig rc = rcc.updateRepositoryConfig(strConfTemplate);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         Repository repository = manager.getRepository("id322322");
         RepositoryConnection connection = repository.getConnection();
 
