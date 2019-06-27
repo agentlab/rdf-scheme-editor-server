@@ -9,6 +9,21 @@ import javax.ws.rs.core.HttpHeaders;
 import org.eclipse.rdf4j.http.server.repository.RepositoryConfigController;
 import org.eclipse.rdf4j.http.server.repository.RepositoryController;
 import org.eclipse.rdf4j.repository.Repository;
+
+import static org.junit.Assert.assertNotNull;
+import static org.ops4j.pax.exam.CoreOptions.junitBundles;
+import static org.ops4j.pax.exam.CoreOptions.maven;
+import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.configureSecurity;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.features;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.karafDistributionConfiguration;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.keepRuntimeFolder;
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.logLevel;
+
+import java.io.File;
+
+import org.apache.karaf.itests.KarafTestSupport;
 import org.eclipse.rdf4j.repository.manager.RepositoryManager;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,7 +34,6 @@ import org.ops4j.pax.exam.karaf.options.LogLevelOption;
 import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
-
 import junit.framework.Assert;
 
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.features;
