@@ -7,14 +7,10 @@
  *******************************************************************************/
 package org.eclipse.rdf4j.http.server.repository;
 
-import java.io.ByteArrayInputStream;
+
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
@@ -28,15 +24,10 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_SERVICE_UNAVAILABLE;
-
-import org.apache.http.HttpStatus;
-import org.apache.http.util.ByteArrayBuffer;
 import org.eclipse.rdf4j.RDF4JException;
 import org.eclipse.rdf4j.common.lang.FileFormat;
 import org.eclipse.rdf4j.common.lang.service.FileFormatServiceRegistry;
@@ -44,28 +35,15 @@ import org.eclipse.rdf4j.http.protocol.Protocol;
 import org.eclipse.rdf4j.http.server.ClientHTTPException;
 import org.eclipse.rdf4j.http.server.HTTPException;
 import org.eclipse.rdf4j.http.server.ServerHTTPException;
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.query.BooleanQuery;
 import org.eclipse.rdf4j.query.Query;
 import org.eclipse.rdf4j.query.QueryEvaluationException;
 import org.eclipse.rdf4j.query.QueryInterruptedException;
 import org.eclipse.rdf4j.query.QueryLanguage;
 import org.eclipse.rdf4j.query.resultio.BooleanQueryResultWriterRegistry;
-import org.eclipse.rdf4j.repository.Repository;
-import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.config.ConfigTemplate;
 import org.eclipse.rdf4j.repository.config.RepositoryConfig;
-import org.eclipse.rdf4j.repository.config.RepositoryConfigUtil;
-
 import org.eclipse.rdf4j.repository.manager.RepositoryManager;
-import org.eclipse.rdf4j.repository.manager.SystemRepository;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFParseException;
-import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
@@ -105,25 +83,9 @@ public class RepositoryController  {
 		System.out.println("query=" + query);
 		
 		boolean headersOnly = false;
-		
-	/*	ConfigTemplate ct = rcc.getConfigTemplate("native");
-		System.out.println("ConfigTemplate: " + ct);
-	
-		Map<String, String> queryParams = new HashMap<>();
-		queryParams.put("Repository ID", repId);
-		String strConfTemplate = ct.render(queryParams);
-		System.out.println("ConfigTemplate render: " + strConfTemplate);
-		RepositoryConfig rc = rcc.updateRepositoryConfig(strConfTemplate);
-		System.out.println("RepositoryConfig.id: " + rc.getID());
-		System.out.println("RepositoryConfig: " + rc.toString());
-		
-		Repository repository = repositoryManager.getRepository(repId);
-		repository.init();
-		RepositoryConnection repositoryCon = repository.getConnection(); */
-	
-		
 		Object queryResult = null;
 		FileFormatServiceRegistry<? extends FileFormat, ?> registry;
+		
 		try {
 			if (query instanceof BooleanQuery) {
 				BooleanQuery bQuery = (BooleanQuery) query;
