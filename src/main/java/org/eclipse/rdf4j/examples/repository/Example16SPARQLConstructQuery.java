@@ -58,6 +58,8 @@ public class Example16SPARQLConstructQuery {
 			conn.add(lozhkin, FOAF.FIRST_NAME, vf.createLiteral("Vasya"));
 			conn.add(lozhkin, FOAF.SURNAME,vf.createLiteral("Lozhkin"));
 
+
+
 			// We do a simple SPARQL CONSTRUCT-query that retrieves all statements about artists,
 			// and their first names.
 			String queryString = "PREFIX ex: <http://example.org/> \n";
