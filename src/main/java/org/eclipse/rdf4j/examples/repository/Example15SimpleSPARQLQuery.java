@@ -56,11 +56,11 @@ public class Example15SimpleSPARQLQuery {
 			ValueFactory vf = SimpleValueFactory.getInstance();
 			String ex = "http://example.org/";
 			IRI artist = vf.createIRI(ex, "Artist");
-
+			
 			IRI lozhkin = vf.createIRI(ex, "Lozhkin");
-
 			conn.add(lozhkin, RDF.TYPE, artist);
 			conn.add(lozhkin, FOAF.FIRST_NAME, vf.createLiteral("Vasya"));
+			
 			// We do a simple SPARQL SELECT-query that retrieves all resources of type `ex:Artist`,
 			// and their first names.
 			String queryString = "PREFIX ex: <http://example.org/> \n";
