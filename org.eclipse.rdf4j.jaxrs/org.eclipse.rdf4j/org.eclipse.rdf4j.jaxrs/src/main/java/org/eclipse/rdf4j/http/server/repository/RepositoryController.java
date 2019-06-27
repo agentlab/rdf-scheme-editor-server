@@ -232,6 +232,10 @@ public class RepositoryController  {
     public boolean delete(@Context UriInfo uriInfo, @PathParam("repId") String repId, @QueryParam("query") String query) throws WebApplicationException {
 		logger.info("DELETE request invoked for repository '" + repId + "'");
 		
+		
+		
+		
+		
 		if (query != null) {
 			logger.warn("query supplied on repository delete request, aborting delete");
 			throw new WebApplicationException("Repository delete error: query supplied with request", Response.Status.BAD_REQUEST);
