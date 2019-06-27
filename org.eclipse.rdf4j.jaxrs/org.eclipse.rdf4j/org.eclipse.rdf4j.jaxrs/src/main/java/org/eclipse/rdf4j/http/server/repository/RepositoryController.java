@@ -32,15 +32,27 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+import static javax.servlet.http.HttpServletResponse.SC_SERVICE_UNAVAILABLE;
+
 import org.apache.http.HttpStatus;
 import org.apache.http.util.ByteArrayBuffer;
 import org.eclipse.rdf4j.RDF4JException;
+import org.eclipse.rdf4j.common.lang.FileFormat;
+import org.eclipse.rdf4j.common.lang.service.FileFormatServiceRegistry;
 import org.eclipse.rdf4j.http.protocol.Protocol;
+import org.eclipse.rdf4j.http.server.ClientHTTPException;
 import org.eclipse.rdf4j.http.server.HTTPException;
 import org.eclipse.rdf4j.http.server.ServerHTTPException;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.query.BooleanQuery;
+import org.eclipse.rdf4j.query.Query;
+import org.eclipse.rdf4j.query.QueryEvaluationException;
+import org.eclipse.rdf4j.query.QueryInterruptedException;
+import org.eclipse.rdf4j.query.QueryLanguage;
+import org.eclipse.rdf4j.query.resultio.BooleanQueryResultWriterRegistry;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
@@ -74,11 +86,13 @@ public class RepositoryController  {
 
 	@Reference
 	private RepositoryManager repositoryManager;
+	
 
 	public RepositoryController() {
 		System.out.println("Init RepositoryController");
 	}
 	
+	/*
 	@GET
 	@Path("/repositories/{repId}")
     @Produces({"application/json", "application/sparql-results+json"})
@@ -92,6 +106,64 @@ public class RepositoryController  {
 		System.out.println("query=" + query);
 		
 		return true;
+	}*/
+	
+	@GET
+	@Path("/repositories/{repId}")
+    @Produces({"application/json", "application/sparql-results+json"})
+    public Query get(@Context UriInfo uriInfo, @PathParam("repId") String repId,
+    		@QueryParam("query") Query query, @QueryParam("queryLn") QueryLanguage queryLn,
+    		@QueryParam("queryLn") String infer, @QueryParam("queryLn") String timeout,
+    		@QueryParam("queryLn") boolean distinct, @QueryParam("queryLn") long limit,
+    		@QueryParam("queryLn") long offset) throws WebApplicationException, IOException, HTTPException {
+		System.out.println("RepositoryController.get");
+		System.out.println("repId=" + repId);
+		System.out.println("query=" + query);
+		
+		boolean headersOnly = false;
+		
+	/*	ConfigTemplate ct = rcc.getConfigTemplate("native");
+		System.out.println("ConfigTemplate: " + ct);
+	
+		Map<String, String> queryParams = new HashMap<>();
+		queryParams.put("Repository ID", repId);
+		String strConfTemplate = ct.render(queryParams);
+		System.out.println("ConfigTemplate render: " + strConfTemplate);
+		RepositoryConfig rc = rcc.updateRepositoryConfig(strConfTemplate);
+		System.out.println("RepositoryConfig.id: " + rc.getID());
+		System.out.println("RepositoryConfig: " + rc.toString());
+		
+		Repository repository = repositoryManager.getRepository(repId);
+		repository.init();
+		RepositoryConnection repositoryCon = repository.getConnection(); */
+	
+		
+		Object queryResult = null;
+		FileFormatServiceRegistry<? extends FileFormat, ?> registry;
+		try {
+			if (query instanceof BooleanQuery) {
+				BooleanQuery bQuery = (BooleanQuery) query;
+				queryResult = headersOnly ? null : bQuery.evaluate();
+				registry = BooleanQueryResultWriterRegistry.getInstance();
+			}
+			else {
+				throw new ClientHTTPException(SC_BAD_REQUEST,
+						"Unsupported query type: " + query.getClass().getName());
+			}
+		}
+		catch (QueryInterruptedException e) {
+			throw new ServerHTTPException(SC_SERVICE_UNAVAILABLE, "Query evaluation took too long");
+		} 
+		catch (QueryEvaluationException e) {
+			if (e.getCause() != null && e.getCause() instanceof HTTPException) {
+				throw (HTTPException) e.getCause();
+			} 		
+			else {
+				throw new ServerHTTPException("Query evaluation error: " + e.getMessage());
+			}
+		}	
+		
+		return (Query) queryResult;
 	}
 
 	
