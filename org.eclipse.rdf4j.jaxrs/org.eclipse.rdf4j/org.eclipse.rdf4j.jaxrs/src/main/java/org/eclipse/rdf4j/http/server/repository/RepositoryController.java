@@ -92,22 +92,6 @@ public class RepositoryController  {
 		System.out.println("Init RepositoryController");
 	}
 	
-	/*
-	@GET
-	@Path("/repositories/{repId}")
-    @Produces({"application/json", "application/sparql-results+json"})
-    public boolean get(@Context UriInfo uriInfo, @PathParam("repId") String repId,
-    		@QueryParam("query") String query, @QueryParam("queryLn") String queryLn,
-    		@QueryParam("queryLn") String infer, @QueryParam("queryLn") String timeout,
-    		@QueryParam("queryLn") String distinct, @QueryParam("queryLn") String limit,
-    		@QueryParam("queryLn") String offset) throws WebApplicationException {
-		System.out.println("RepositoryController.get");
-		System.out.println("repId=" + repId);
-		System.out.println("query=" + query);
-		
-		return true;
-	}*/
-	
 	@GET
 	@Path("/repositories/{repId}")
     @Produces({"application/json", "application/sparql-results+json"})
