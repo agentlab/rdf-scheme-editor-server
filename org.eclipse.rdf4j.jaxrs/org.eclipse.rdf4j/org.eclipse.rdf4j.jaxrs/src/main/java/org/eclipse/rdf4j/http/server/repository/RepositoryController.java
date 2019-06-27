@@ -7,29 +7,11 @@
  *******************************************************************************/
 package org.eclipse.rdf4j.http.server.repository;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
-import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-import static javax.servlet.http.HttpServletResponse.SC_SERVICE_UNAVAILABLE;
-import static org.eclipse.rdf4j.http.protocol.Protocol.BINDING_PREFIX;
-import static org.eclipse.rdf4j.http.protocol.Protocol.DEFAULT_GRAPH_PARAM_NAME;
-import static org.eclipse.rdf4j.http.protocol.Protocol.INCLUDE_INFERRED_PARAM_NAME;
-import static org.eclipse.rdf4j.http.protocol.Protocol.NAMED_GRAPH_PARAM_NAME;
-import static org.eclipse.rdf4j.http.protocol.Protocol.QUERY_LANGUAGE_PARAM_NAME;
-import static org.eclipse.rdf4j.http.protocol.Protocol.QUERY_PARAM_NAME;
 
 import java.io.IOException;
-import java.util.Enumeration;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.servlet.http.HttpServletRequest;
-
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
@@ -43,66 +25,28 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-
-import org.apache.http.HttpStatus;
-import org.apache.http.util.ByteArrayBuffer;
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+import static javax.servlet.http.HttpServletResponse.SC_SERVICE_UNAVAILABLE;
 import org.eclipse.rdf4j.RDF4JException;
 import org.eclipse.rdf4j.common.lang.FileFormat;
 import org.eclipse.rdf4j.common.lang.service.FileFormatServiceRegistry;
 import org.eclipse.rdf4j.http.protocol.Protocol;
-import org.eclipse.rdf4j.http.server.HTTPException;
-import org.eclipse.rdf4j.http.server.ServerHTTPException;
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.ValueFactory;
-
-import org.eclipse.rdf4j.http.protocol.error.ErrorInfo;
-import org.eclipse.rdf4j.http.protocol.error.ErrorType;
 import org.eclipse.rdf4j.http.server.ClientHTTPException;
 import org.eclipse.rdf4j.http.server.HTTPException;
-import org.eclipse.rdf4j.http.server.ProtocolUtil;
 import org.eclipse.rdf4j.http.server.ServerHTTPException;
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.util.ModelBuilder;
-import org.eclipse.rdf4j.model.vocabulary.FOAF;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
+
 import org.eclipse.rdf4j.query.BooleanQuery;
-import org.eclipse.rdf4j.query.GraphQuery;
-import org.eclipse.rdf4j.query.GraphQueryResult;
-import org.eclipse.rdf4j.query.MalformedQueryException;
 import org.eclipse.rdf4j.query.Query;
 import org.eclipse.rdf4j.query.QueryEvaluationException;
 import org.eclipse.rdf4j.query.QueryInterruptedException;
 import org.eclipse.rdf4j.query.QueryLanguage;
-import org.eclipse.rdf4j.query.QueryResults;
-import org.eclipse.rdf4j.query.TupleQuery;
-import org.eclipse.rdf4j.query.TupleQueryResult;
-import org.eclipse.rdf4j.query.UnsupportedQueryLanguageException;
-import org.eclipse.rdf4j.query.impl.SimpleDataset;
+
 import org.eclipse.rdf4j.query.resultio.BooleanQueryResultWriterRegistry;
-import org.eclipse.rdf4j.query.resultio.TupleQueryResultWriterRegistry;
-import org.eclipse.rdf4j.repository.Repository;
-import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.config.ConfigTemplate;
 import org.eclipse.rdf4j.repository.config.RepositoryConfig;
-
-import org.eclipse.rdf4j.repository.config.RepositoryConfigUtil;
-
 import org.eclipse.rdf4j.repository.manager.RepositoryManager;
-import org.eclipse.rdf4j.repository.manager.SystemRepository;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFParseException;
-import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
-import org.eclipse.rdf4j.repository.manager.RepositoryManager;
-import org.eclipse.rdf4j.repository.manager.SystemRepository;
-import org.eclipse.rdf4j.rio.RDFWriterRegistry;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
@@ -129,6 +73,7 @@ public class RepositoryController  {
 	
 	@Reference
 	private RepositoryManager repositoryManager;
+	
 
 	public RepositoryController() {
 		System.out.println("Init RepositoryController");
@@ -137,18 +82,45 @@ public class RepositoryController  {
 	@GET
 	@Path("/repositories/{repId}")
     @Produces({"application/json", "application/sparql-results+json"})
-    public boolean get(@Context UriInfo uriInfo, @PathParam("repId") String repId,
+
+    public Query get(@Context UriInfo uriInfo, @PathParam("repId") String repId,
     		@QueryParam("query") Query query, @QueryParam("queryLn") QueryLanguage queryLn,
-    		@QueryParam("queryIn") String infer, @QueryParam("queryTo") String timeout,
-    		@QueryParam("queryDi") boolean distinct, @QueryParam("queryLi") long limit,
-    		@QueryParam("queryOf") long offset) throws Exception {
+    		@QueryParam("queryLn") String infer, @QueryParam("queryLn") String timeout,
+    		@QueryParam("queryLn") boolean distinct, @QueryParam("queryLn") long limit,
+    		@QueryParam("queryLn") long offset) throws WebApplicationException, IOException, HTTPException {
+
 		System.out.println("RepositoryController.get");
 		System.out.println("repId=" + repId);
 		System.out.println("query=" + query);
 		
-		return true;
-
-
+		boolean headersOnly = false;
+		Object queryResult = null;
+		FileFormatServiceRegistry<? extends FileFormat, ?> registry;
+		
+		try {
+			if (query instanceof BooleanQuery) {
+				BooleanQuery bQuery = (BooleanQuery) query;
+				queryResult = headersOnly ? null : bQuery.evaluate();
+				registry = BooleanQueryResultWriterRegistry.getInstance();
+			}
+			else {
+				throw new ClientHTTPException(SC_BAD_REQUEST,
+						"Unsupported query type: " + query.getClass().getName());
+			}
+		}
+		catch (QueryInterruptedException e) {
+			throw new ServerHTTPException(SC_SERVICE_UNAVAILABLE, "Query evaluation took too long");
+		} 
+		catch (QueryEvaluationException e) {
+			if (e.getCause() != null && e.getCause() instanceof HTTPException) {
+				throw (HTTPException) e.getCause();
+			} 		
+			else {
+				throw new ServerHTTPException("Query evaluation error: " + e.getMessage());
+			}
+		}	
+		
+		return (Query) queryResult;
 	}
 
 	
