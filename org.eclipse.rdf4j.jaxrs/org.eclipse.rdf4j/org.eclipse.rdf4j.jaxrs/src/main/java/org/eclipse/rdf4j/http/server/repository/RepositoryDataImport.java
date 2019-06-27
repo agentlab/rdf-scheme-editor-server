@@ -9,10 +9,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringReader;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -26,6 +29,7 @@ import javax.ws.rs.core.Application;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import org.eclipse.rdf4j.RDF4JException;
@@ -60,53 +64,85 @@ public class RepositoryDataImport {
 	}
 	
 	@PUT
-	@Path("/repositories/import")
+	@Path("/repositories/import/{fileName}")
 	@Consumes({"*/*"})
-	public void importDocuments(InputStream input) throws WebApplicationException, IOException{
+	public Response importDocuments(@Context UriInfo uriInfo,
+			@PathParam("fileName") String fileName,
+			InputStream input) throws WebApplicationException, IOException{
 		System.out.println("Handle data");		
-		
-		String path = "/rdf4j2-server/repositories/import/";
-		try {
-			System.out.println("Import data");
-			int read = 0;
-			byte[] bytes = new byte[input.available()];
-			String fileLocation = path + "test.docx";  
-             //saving file  
-	     try {  
-	         FileOutputStream out = new FileOutputStream(new File(fileLocation));          
-	         out = new FileOutputStream(new File(fileLocation));  
-	         while ((read = input.read(bytes)) != -1) {  
-	             out.write(bytes, 0, read);  
-	         }  
-	         out.flush();  
-	         out.close();  
-	     } catch (IOException e) {e.printStackTrace();}  
-	     String output = "File successfully uploaded to : " + fileLocation;  
-		} 
-		catch (RDF4JException e) {
-			logger.error("error while attempting to get template '", e);
-			throw new WebApplicationException("error while attempting to get template: " + e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-		} 
+		Pattern pattern = Pattern.compile(".+\\.(docx|csv)");
+		Matcher matcher = pattern.matcher(fileName);
+		boolean found = matcher.matches();
+		if (found) 
+		{
+			try {
+				System.out.println("Import data");
+				int read = 0;
+				byte[] bytes = new byte[input.available()]; 
+			    try
+			    {  
+			    	 File file = new File("./" + fileName);
+			    	 if(!file.exists()) 
+			    	 {
+			    		 if (file.createNewFile()) {
+					         FileOutputStream out = new FileOutputStream(file);  
+					         while ((read = input.read(bytes)) != -1) {  
+					             out.write(bytes, 0, read);  
+					         }  
+					         out.flush();  
+					         out.close(); 
+			    		 }
+			    		 getDirectoryAndFiles();
+			    		 return Response.created(uriInfo.getAbsolutePath()).build();
+			    	 }
+			    	 else
+			    	 {
+			    		 System.out.println("File exists. Set a different file name");
+			    		 return Response.status(409).build();
+			    	 }
+			    }
+			    catch (IOException e) {return Response.serverError().build();}
+			} 
+			catch (Exception e) {return Response.serverError().build();}
+		}
+		else {return Response.status(415).build();}		
 	}
 	
-//	private void saveToFile(InputStream uploadedInputStream)
-//	{
-//	    try {
-//	        OutputStream out = null;
-//	        int read = 0;
-//	        byte[] bytes = new byte[1024];
-//	        
-//	        out = new FileOutputStream(new File());
-//	        while ((read = uploadedInputStream.read(bytes)) != -1) {
-//	            out.write(bytes, 0, read);
-//	        }
-//	        out.flush();
-//	        out.close();
-//	    } catch (IOException e) {
-//
-//	        e.printStackTrace();
-//	    }
-//	}
+	@GET
+	@Path("/repositories/import/{fileName}")
+	@Produces("*/*")
+	public Response getFile(@PathParam("fileName") String fileName) {
+		
+        File file = new File("./" + fileName);
+        if (file.exists()) {
+	        ResponseBuilder response = Response.ok((Object) file);
+	        response.header("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+	        return response.build();	
+        }
+        else { return Response.status(204).build(); }
+    }
+	
+	private void getDirectoryAndFiles() {
+		try {
+			File dir = new File("./");
+	        // если объект представляет каталог
+	        if(dir.isDirectory())
+	        {
+	            // получаем все вложенные объекты в каталоге
+	            for(File item : dir.listFiles()){	              
+	                 if(item.isDirectory()){
+	                      
+	                     System.out.println(item.getName() + "  \t folder");
+	                 }
+	                 else{
+	                      
+	                     System.out.println(item.getName() + "\t file");
+	                 }
+	             }
+	        }
+        }
+		catch(Exception e) {System.out.println("Error! Directory not exist");}
+	}
 
 }
 
