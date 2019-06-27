@@ -1,5 +1,15 @@
 package com.example.myproject.test;
  
+import static org.junit.Assert.*;
+import static org.ops4j.pax.exam.CoreOptions.*;
+ 
+import javax.inject.Inject;
+import javax.ws.rs.core.HttpHeaders;
+
+import org.eclipse.rdf4j.http.server.repository.RepositoryConfigController;
+import org.eclipse.rdf4j.http.server.repository.RepositoryController;
+import org.eclipse.rdf4j.repository.Repository;
+
 import static org.junit.Assert.assertNotNull;
 import static org.ops4j.pax.exam.CoreOptions.junitBundles;
 import static org.ops4j.pax.exam.CoreOptions.maven;
@@ -24,14 +34,27 @@ import org.ops4j.pax.exam.karaf.options.LogLevelOption;
 import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
+import junit.framework.Assert;
+
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.features;
+
+import java.io.File;
+import java.io.OutputStreamWriter;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Scanner;
+
+import org.apache.karaf.itests.KarafTestSupport;
+import org.apache.karaf.shell.api.action.lifecycle.Reference;
+
+import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.*;
 
 
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
 public class SampleTest extends KarafTestSupport {
- 
-    //@Inject
-    //private RepositoryManager manager;
+	
+
  
     @Override
     @Configuration
@@ -76,7 +99,6 @@ public class SampleTest extends KarafTestSupport {
         installAndAssertFeature("scr");
         
         //installAndAssertFeature("org.eclipse.rdf4j.jaxrs");
-        
      // testing a command execution
         String bundles = executeCommand("bundle:list -t 0");
         System.out.println(bundles);
@@ -92,4 +114,36 @@ public class SampleTest extends KarafTestSupport {
         System.out.println("Size=" + manager.getAllRepositories().size());
         System.out.println("Location=" + manager.getLocation());
     }
+    
+    @Test
+    public void TestCreateRepo() throws Exception{
+    	//System.out.println(executeCommand("bundle:dynamic-import 175"));
+    	HttpURLConnection connection = null;
+    	RepositoryController repositoryController = getOsgiService(RepositoryController.class);
+        RepositoryManager manager = getOsgiService(RepositoryManager.class);  
+        
+        
+        for(String repo : manager.getRepositoryIDs()) System.out.println(repo);
+    	  
+          int size = manager.getAllRepositories().size();
+          System.out.println(size);
+          repositoryController.createRep("", "id3234", null);
+//          URL url = new URL("http://localhost:8181/rdf4j2-server/repositories/id123");
+//          HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
+//          httpCon.setDoOutput(true);
+//
+//          httpCon.setRequestMethod("PUT");
+//          OutputStreamWriter out = 	new OutputStreamWriter(
+//          httpCon.getOutputStream());
+//          out.write("Resource content");
+//          out.close();
+//          Scanner s = new Scanner(httpCon.getInputStream());
+//
+//          while (s.hasNextLine()) {
+//          System.out.println(s.nextLine());
+//          }
+		  int sizeAfter = manager.getAllRepositories().size();
+		  System.out.println(sizeAfter);
+		  assertEquals(size, sizeAfter-1);
+}
 }

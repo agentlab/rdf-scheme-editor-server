@@ -7,28 +7,58 @@
  *******************************************************************************/
 package org.eclipse.rdf4j.http.server.repository;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.apache.http.HttpStatus;
+import org.apache.http.util.ByteArrayBuffer;
 import org.eclipse.rdf4j.RDF4JException;
 import org.eclipse.rdf4j.http.protocol.Protocol;
+import org.eclipse.rdf4j.http.server.HTTPException;
+import org.eclipse.rdf4j.http.server.ServerHTTPException;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.repository.Repository;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
+import org.eclipse.rdf4j.repository.config.ConfigTemplate;
+import org.eclipse.rdf4j.repository.config.RepositoryConfig;
+import org.eclipse.rdf4j.repository.config.RepositoryConfigUtil;
+
 import org.eclipse.rdf4j.repository.manager.RepositoryManager;
 import org.eclipse.rdf4j.repository.manager.SystemRepository;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFParseException;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.eclipse.rdf4j.http.server.repository.RepositoryConfigController;
 
 /**
  * Handles queries and admin (delete) operations on a repository and renders the results in a format suitable to the
@@ -38,11 +68,13 @@ import org.slf4j.LoggerFactory;
 @Component(service = RepositoryController.class, property = { "osgi.jaxrs.resource=true" })
 @Path("/rdf4j2-server")
 public class RepositoryController  {
+	@Reference
+	RepositoryConfigController rcc;
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Reference
 	private RepositoryManager repositoryManager;
-	
+
 	public RepositoryController() {
 		System.out.println("Init RepositoryController");
 	}
@@ -58,7 +90,24 @@ public class RepositoryController  {
 		System.out.println("RepositoryController.get");
 		System.out.println("repId=" + repId);
 		System.out.println("query=" + query);
+		
 		return true;
+	}
+
+	
+	@PUT
+	@Path("/repositories/{repId}")
+	public void createRep(String body, @PathParam("repId") String repId, @Context HttpHeaders headers) 
+			throws Exception {
+		ConfigTemplate ct = rcc.getConfigTemplate("native");
+		Map<String, String> queryParams = new HashMap<>();
+		queryParams.put("Repository ID", repId);
+		String strConfTemplate = ct.render(queryParams);
+		System.out.println("ConfigTemplate render: " + strConfTemplate);
+		RepositoryConfig rc = rcc.updateRepositoryConfig(strConfTemplate);
+		logger.info("PUT request invoked for repository '" + repId + "'");
+		System.out.println("PUT request");
+		System.out.println("OK");
 	}
 	
 	@POST
