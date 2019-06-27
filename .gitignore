@@ -13,3 +13,4 @@ bin
 
 # misc
 .DS_Store
+/target/
