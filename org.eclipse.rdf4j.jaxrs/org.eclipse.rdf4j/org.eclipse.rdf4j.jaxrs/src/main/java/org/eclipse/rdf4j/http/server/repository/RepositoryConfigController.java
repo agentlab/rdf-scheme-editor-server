@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
 @Component(service = RepositoryConfigController.class, property = { "osgi.jaxrs.resource=true" })
 @Path("/rdf4j2-server")
 public class RepositoryConfigController {
-	final Logger logger = LoggerFactory.getLogger(this.getClass());
+	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	@Reference
 	private RepositoryManager repositoryManager;
