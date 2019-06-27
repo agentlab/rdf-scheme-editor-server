@@ -178,24 +178,30 @@ public class testik extends KarafTestSupport {
 
         HttpURLConnection connection2 = (HttpURLConnection) url2.openConnection();
         HttpURLConnection response2 = (HttpURLConnection) url2.openConnection();
-        connection2.setRequestMethod("PUT");
         try {
-            controller.handleRequestInternal(connection2, response2, "rpo13", "4321");
+            connection2.setRequestMethod("PUT");
+			controller.handleRequestInternal(connection2, response2, "rpo13", "4321");
             connection2.disconnect();
             if (connectionAdd.getResponseCode() != 200) {
                 repositoryConnection.close();
                 fail("Транзакция не успешна");
             }
-            String data = response.getResponseMessage.toString();
-			response2.disconnect();
-            assertEquals(data, "<rdf:Description rdf:about=\"http://example/book1/\">\n" +
+            //read the inputstream and print it
+            String result;
+            BufferedInputStream bis = new BufferedInputStream(response2.getInputStream());
+            ByteArrayOutputStream buf = new ByteArrayOutputStream();
+            int result2 = bis.read();
+            while(result2 != -1) {
+                buf.write((byte) result2);
+                result2 = bis.read();
+            }
+            String data = buf.toString();
+            assertTrue(data.contains("<rdf:Description rdf:about=\"http://example/book1/\">\n" +
                     "<facetproperty_creator_adms3title xmlns=\"http://ld-r.org/config/\">103</facetproperty_creator_adms3title>\n" +
-                    "</rdf:Description>");
-            
+                    "</rdf:Description>"));
+
         } catch (Exception e) {
             e.printStackTrace();
-			connection2.disconnect();
-			response2.disconnect();
             repositoryConnection.close();
             fail("Транзакция не успешна");
         }
@@ -207,6 +213,8 @@ public class testik extends KarafTestSupport {
             fail("Транзакция не успешна");
         }
 
+        connection2.close();
+        response2.disconnect();
         repositoryConnection.close();
     }
 }
