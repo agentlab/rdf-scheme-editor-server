@@ -1,2 +1,7 @@
+<<<<<<< HEAD
 BUNDLE_ROOT_PATH=target/classes
 eclipse.preferences.version=1
+=======
+BUNDLE_ROOT_PATH=target/classes
+eclipse.preferences.version=1
+>>>>>>> 4e002495842c02ff0066ad379e3d176ba774e857
