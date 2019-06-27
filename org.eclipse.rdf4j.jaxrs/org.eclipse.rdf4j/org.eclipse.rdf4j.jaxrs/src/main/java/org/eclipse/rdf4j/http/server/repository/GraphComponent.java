@@ -128,8 +128,7 @@ public class GraphComponent {
 	}
 	
 	//......
-		
-		
+				
 		@DELETE
 		@Path("/repositories/{repId}/rdf-graphs/{graphName}")	
 		public void deleteGraph(@PathParam("repId") String repId, @PathParam("graphName") String graphName, @Context UriInfo uri) throws IOException {
