@@ -59,29 +59,6 @@ public class GraphComponent {
 	}
 	
 	
-	public final StreamingOutput outputMethod(Repository repository, StreamingOutput fileStream, Resource[] graph) {
-		
-		fileStream =  new StreamingOutput()
-        {
-            @Override
-            public void write(java.io.OutputStream output) throws IOException, WebApplicationException
-            {
-                try
-                {
-        			RDFWriter writer = Rio.createWriter(RDFFormat.RDFXML, output);
-        			
-        			repository.getConnection().exportStatements(null, null, null, true, writer, graph);
-        			System.out.println ("Statements получены"); 
-                }
-                catch (Exception e)
-                {
-                    throw new WebApplicationException("File Not Found !!");
-                }
-            }
-        };
-        return fileStream;
-	}
-
 	@GET
 	@Path("/repositories/{repId}/rdf-graphs/{graphName}")	
 	public Response getGraph(@PathParam("repId") String repId, @PathParam("graphName") String graphName, @Context UriInfo uri) throws IOException {
@@ -90,7 +67,6 @@ public class GraphComponent {
 		System.out.println("graphName = " + graphName);
 		
 		Repository repository = null;
-		StreamingOutput outStream = null;
 		StreamingOutput fileStream = null;
 		
 		try {
@@ -111,21 +87,24 @@ public class GraphComponent {
 			//IRI IRIgraph = vf.createIRI(graphName); 
 			IRI IRIgraph = vf.createIRI(myUri);  //??????????
 			Resource[] graph = new Resource[] { IRIgraph };
-			//RDFHandler response = null;
+			final Repository r = repository;
 			
-			//FileOutputStream out = new FileOutputStream ("C:/rdf/file.rdf");
-			
-			
-			
-			/**RDFWriter writer = Rio.createWriter(RDFFormat.RDFXML, out);
-			
-			repository.getConnection().exportStatements(null, null, null, true, writer, graph);
-			System.out.println ("Statements получены"); } **/
-			
-			
-			fileStream = outputMethod(repository, outStream, graph);
-			}
-			catch (Exception e) {
+			fileStream =  new StreamingOutput() {
+	            @Override
+	            public void write(java.io.OutputStream output) throws IOException, WebApplicationException {
+	                try {
+	        			RDFWriter writer = Rio.createWriter(RDFFormat.RDFXML, output);
+	        			
+	        			r.getConnection().exportStatements(null, null, null, true, writer, graph);
+	        			System.out.println ("Statements получены"); 
+	                }
+	                catch (Exception e) {
+	                    throw new WebApplicationException("File Not Found !!");
+	                }
+	            }
+	        };
+					
+			} catch (Exception e) {
 				System.out.println ("NOPE! v2.0");
 				e.printStackTrace();
 			}
@@ -137,8 +116,7 @@ public class GraphComponent {
 				repository = repositoryManager.getRepository(repId);
 				repository.init();
 				System.out.println ("Репозиторий создан");
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				System.out.println ("NOPE! v2.0");
 				e.printStackTrace();
 			}
@@ -147,7 +125,6 @@ public class GraphComponent {
                 .ok(fileStream, MediaType.APPLICATION_OCTET_STREAM)
                 .header("content-disposition","attachment; filename = myfile.pdf")
                 .build();
-		//createRepConfig(rcc, graphName);
 	}
 	
 	//......
@@ -202,9 +179,5 @@ public class GraphComponent {
 					e.printStackTrace();
 				}
 			}
-		
 	};
-	
-	
-
 }
