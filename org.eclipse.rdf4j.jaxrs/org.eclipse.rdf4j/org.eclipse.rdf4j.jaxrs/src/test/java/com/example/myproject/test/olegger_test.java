@@ -7,6 +7,8 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 
 import jdk.nashorn.internal.ir.annotations.Reference;
+import shaded.org.apache.commons.io.IOUtils;
+
 import org.eclipse.rdf4j.http.server.repository.RepositoryConfigController;
 import org.eclipse.rdf4j.http.server.repository.RepositoryController;
 import org.eclipse.rdf4j.http.server.transaction.ActiveTransactionRegistry;
@@ -40,6 +42,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -105,12 +110,13 @@ public class olegger_test extends KarafTestSupport {
         
         URL url = new URL("http://localhost:8181/rdf4j2-server/repositories/rpotest?query=ask%20{?s%20?p%20?o}");
         URLConnection conn = url.openConnection();
+        InputStream inputStream = conn.getInputStream();
         
-        InputStream input = conn.getInputStream();
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(inputStream, writer, "UTF-8");
+        String line = writer.toString();
         
-        String inputStr = input.toString();
-        
-        if (inputStr != "true") {
+        if (line.contains("false")) {
         	fail("Запрос не выполнен");
         }
     	  
@@ -119,16 +125,16 @@ public class olegger_test extends KarafTestSupport {
     @Test
     public void getQueryTest2() throws Exception {
        
-        URL url = new URL("http://localhost:8181/rdf4j2-server/repositories/rpotest?query=construct");
+        URL url = new URL("http://localhost:8181/rdf4j2-server/repositories/rpotest?query=ask%20{?s%20?p%20?o}");
         URLConnection conn = url.openConnection();
+        InputStream inputStream = conn.getInputStream();
         
-        InputStream input = conn.getInputStream();
+        StringWriter writer = new StringWriter();
+        IOUtils.copy(inputStream, writer, "UTF-8");
+        String line = writer.toString();
         
-        String inputStr = input.toString();
-        
-        if (inputStr == "true") {
-        	fail("Запрос выполнен успешно");
-        }   
-        
+        if (line.contains("true")) {
+        	fail("Запрос выполнен, но не должен был");
+        }
     }
 } 
