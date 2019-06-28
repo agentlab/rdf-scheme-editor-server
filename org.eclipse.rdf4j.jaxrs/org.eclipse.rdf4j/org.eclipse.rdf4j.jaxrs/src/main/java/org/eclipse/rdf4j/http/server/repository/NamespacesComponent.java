@@ -52,7 +52,7 @@ import org.eclipse.rdf4j.query.impl.ListBindingSet;
 @Path("/rdf4j-server")
 @Component(service = NamespacesComponent.class, property = { "osgi.jaxrs.resource=true" })
 	public class NamespacesComponent {
-		
+
 	@Reference
 	private RepositoryManager repositorymanager;
 
@@ -62,7 +62,7 @@ import org.eclipse.rdf4j.query.impl.ListBindingSet;
 	public NamespacesComponent() {
 		System.out.println("NamespacesComponent");
 	}
-	
+
 	private void createRepoConfig (RepositoryConfigController rcc, String repId) throws RDF4JException, IOException {
 		ConfigTemplate ct = rcc.getConfigTemplate("native");
 		System.out.println("ConfigTemplate: " + ct);
@@ -74,47 +74,119 @@ import org.eclipse.rdf4j.query.impl.ListBindingSet;
 		System.out.println("RepositoryConfig.id: " + rc.getID());
 		System.out.println("RepositoryConfig: " + rc.toString());
 	}
-	
+
 	@GET
 	@Path("/repositories/{repId}/namespaces")
 	@Produces({"application/json", "application/sparql-results+json"})
-	public IteratingTupleQueryResult get(@Context UriInfo uriInfo, @PathParam("repId") String repId, @QueryParam("context") Resource[] context) throws RDF4JException, IOException, ServerHTTPException {
-		
+	public List<BindingSet>/*TupleQueryResult*/ get(@Context UriInfo uriInfo, @PathParam("repId") String repId, @QueryParam("context") Resource[] context) throws RDF4JException, IOException, ServerHTTPException {
 		Repository repository = null;
-		repository = repositorymanager.getRepository(repId);
-		List<String> columnNames = new ArrayList<>();
+		List<String> columnNames = Arrays.asList("prefix", "namespace");
 		List<BindingSet> namespaces = new ArrayList<>();
-		try (RepositoryConnection repositoryCon = repository.getConnection()) {
-			System.out.println("Hello");			
-			final ValueFactory vf = repositoryCon.getValueFactory();
-			
-			try {
-				System.out.println("trn");
-				try (CloseableIteration<? extends Namespace, RepositoryException> iter = repositoryCon.getNamespaces()) {
-					System.out.println("pty");
-					while (iter.hasNext()) {
-						System.out.println("tttyyy");
-						Namespace ns = iter.next();
-						Literal prefix = vf.createLiteral(ns.getPrefix());
-						Literal namespace = vf.createLiteral(ns.getName());
-						BindingSet bindingSet = new ListBindingSet(columnNames, prefix, namespace);
-						namespaces.add(bindingSet);
+		
+		/*ValueFactory vf = SimpleValueFactory.getInstance();
+		Literal prefix = vf.createLiteral("ddd");
+		Literal namespace = vf.createLiteral("http://rrr.tu/678");
+
+		BindingSet bindingSet = new ListBindingSet(columnNames, prefix, namespace);
+		namespaces.add(bindingSet);*/
+		try {
+			repository = repositorymanager.getRepository(repId);
+		}
+		catch (Exception e){
+			System.out.println("Не получили репозиторий из менеджера");
+			e.printStackTrace();
+		}
+		if (repository != null) {
+			repository = repositorymanager.getRepository(repId);
+	
+			try (RepositoryConnection repositoryCon = repository.getConnection()) {
+				System.out.println("Hello");			
+				final ValueFactory vf = repositoryCon.getValueFactory();
+				repositoryCon.setNamespace("str", "ejgierjgierjigjr");
+				try {
+					System.out.println("trn");
+					try (RepositoryResult<Namespace> iter = repositoryCon.getNamespaces()) {
+						System.out.println("pty");
+						
+						while (iter.hasNext()) {
+							System.out.println("tttyyy");
+							Namespace ns = iter.next();
+							System.out.println("tttyyy1");
+							Literal prefix = vf.createLiteral(ns.getPrefix());
+							System.out.println("tttyyy2");
+							Literal namespace = vf.createLiteral(ns.getName());
+							System.out.println("tttyyy3");
+							BindingSet bindingSet = new ListBindingSet(columnNames, prefix, namespace);
+							System.out.println("tttyyy4");
+							namespaces.add(bindingSet);
+							System.out.println(namespaces);
+						}
+						repositoryCon.close();
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
-					columnNames.add("uri");
-					columnNames.add("id");
-					columnNames.add("title");
-					columnNames.add("readable");
-					columnNames.add("writable");
+				} catch (RepositoryException e) {
+					e.printStackTrace();
+					repositoryCon.close();
+					System.out.println("zet");
+					throw new ServerHTTPException("Repository error: " + e.getMessage(), e);
 				}
-			} catch (RepositoryException e) {
-				System.out.println("zet");
-				throw new ServerHTTPException("Repository error: " + e.getMessage(), e);
+				repositoryCon.close();
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		}
-		return new IteratingTupleQueryResult(columnNames, namespaces);
-    }
-		
+		else {
+			System.out.println(repId + " не найден");
+			createRepoConfig(rcc, repId);
+			try {
+				repository = repositorymanager.getRepository(repId);
+			}
+			catch (Exception e){
+				System.out.println("Ошибка создания репозитория");
+				e.printStackTrace();
+			}
 	
+			try (RepositoryConnection repositoryCon = repository.getConnection()) {
+				System.out.println("Hello");			
+				final ValueFactory vf = repositoryCon.getValueFactory();
+				repositoryCon.setNamespace("str", "ejgierjgierjigjr");
+				try {
+					System.out.println("trn");
+					try (RepositoryResult<Namespace> iter = repositoryCon.getNamespaces()) {
+						System.out.println("pty");
+						
+						while (iter.hasNext()) {
+							System.out.println("tttyyy");
+							Namespace ns = iter.next();
+							Literal prefix = vf.createLiteral(ns.getPrefix());
+							Literal namespace = vf.createLiteral(ns.getName());
+							BindingSet bindingSet = new ListBindingSet(columnNames, prefix, namespace);
+							
+							System.out.println(bindingSet);
+							namespaces.add(bindingSet);
+							System.out.println(namespaces.size());
+						}
+						repositoryCon.close();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				} catch (RepositoryException e) {
+					e.printStackTrace();
+					repositoryCon.close();
+					System.out.println("zet");
+					throw new ServerHTTPException("Repository error: " + e.getMessage(), e);
+				}
+				repositoryCon.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		System.out.println(namespaces);
+		return namespaces;//new IteratingTupleQueryResult(columnNames, namespaces);
+    }
+
+
 	@DELETE
     @Path("/repositories/{repId}/namespaces")
 	@Produces({"application/json", "application/sparql-results+xml"})
