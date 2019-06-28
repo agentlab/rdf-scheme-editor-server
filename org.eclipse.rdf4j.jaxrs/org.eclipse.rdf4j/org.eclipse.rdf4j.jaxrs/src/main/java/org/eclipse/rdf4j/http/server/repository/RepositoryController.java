@@ -94,11 +94,11 @@ public class RepositoryController  {
 	@Path("/repositories/{repId}")
     @Produces({"application/json", "application/sparql-results+json"})
     public boolean get(
-			@Context UriInfo uriInfo, @PathParam("repId") String repId,
-			@QueryParam("query") String query, @QueryParam("queryLn") String queryLn,
-			@QueryParam("infer") String infer, @QueryParam("timeout") String timeout,
-			@QueryParam("queryLn") String distinct, @QueryParam("limit") String limit,
-			@QueryParam("offset") String offset) throws WebApplicationException {
+		@Context UriInfo uriInfo, @PathParam("repId") String repId,
+		@QueryParam("query") String query, @QueryParam("queryLn") String queryLn,
+		@QueryParam("infer") String infer, @QueryParam("timeout") String timeout,
+		@QueryParam("queryLn") String distinct, @QueryParam("limit") String limit,
+		@QueryParam("offset") String offset) throws WebApplicationException {
 		System.out.println("RepositoryController.get");
 		System.out.println("repId_get=" + repId);
 		System.out.println("query_get=" + query);
@@ -141,14 +141,14 @@ public class RepositoryController  {
 	@Consumes(Protocol.SPARQL_QUERY_MIME_TYPE)
     public Query createSparql(@Context UriInfo uriInfo, @PathParam("repId") String repId,
     		@QueryParam("query") Query query, @QueryParam("queryLn") QueryLanguage queryLn,
-    		@QueryParam("queryLn") boolean infer, @QueryParam("queryLn") int timeout,
-    		@QueryParam("queryLn") boolean distinct, @QueryParam("queryLn") long limit,
+    		@QueryParam("infer") boolean infer, @QueryParam("timeout") int timeout,
+    		@QueryParam("distinct") boolean distinct, @QueryParam("limit") long limit,
     		@QueryParam("offset") long offset) throws WebApplicationException, HTTPException, RDF4JException, IOException {
 		System.out.println("RepositoryController.createSparql");
 		System.out.println("repId=" + repId);
 		System.out.println("query=" + query);
 		
-		ConfigTemplate ct = rcc.getConfigTemplate("native");
+	ConfigTemplate ct = rcc.getConfigTemplate("native");
         System.out.println("ConfigTemplate: " + ct);
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put("Repository ID", repId);
