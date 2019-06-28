@@ -111,7 +111,7 @@ public class olegger_test extends KarafTestSupport {
         String inputStr = input.toString();
         
         if (inputStr != "true") {
-        	fail("Транзакция не успешна");
+        	fail("Запрос не выполнен");
         }
     	  
     }
@@ -127,7 +127,7 @@ public class olegger_test extends KarafTestSupport {
         String inputStr = input.toString();
         
         if (inputStr == "true") {
-        	fail("Транзакция успешна");
+        	fail("Запрос выполнен успешно");
         }   
         
     }
