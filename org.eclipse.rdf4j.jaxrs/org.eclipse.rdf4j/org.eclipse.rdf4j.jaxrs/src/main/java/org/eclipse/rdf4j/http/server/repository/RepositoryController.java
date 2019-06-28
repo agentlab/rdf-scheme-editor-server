@@ -90,29 +90,25 @@ public class RepositoryController  {
 		System.out.println("Init RepositoryController");
 	}
 	
-	
 	@GET
 	@Path("/repositories/{repId}")
     @Produces({"application/json", "application/sparql-results+json"})
     public boolean get(
-		@Context UriInfo uriInfo, @PathParam("repId") String repId,
-		@QueryParam("query") String query, @QueryParam("queryLn") String queryLn,
-		@QueryParam("infer") String infer, @QueryParam("timeout") String timeout,
-		@QueryParam("queryLn") String distinct, @QueryParam("limit") String limit,
-		@QueryParam("offset") String offset
-    )
-    throws WebApplicationException {
+			@Context UriInfo uriInfo, @PathParam("repId") String repId,
+			@QueryParam("query") String query, @QueryParam("queryLn") String queryLn,
+			@QueryParam("infer") String infer, @QueryParam("timeout") String timeout,
+			@QueryParam("queryLn") String distinct, @QueryParam("limit") String limit,
+			@QueryParam("offset") String offset) throws WebApplicationException {
 		System.out.println("RepositoryController.get");
 		System.out.println("repId_get=" + repId);
 		System.out.println("query_get=" + query);
 		return true;
 	}
-	
 		
 	@PUT
 	@Path("/repositories/{repId}")
 	public void createRep(String body, @PathParam("repId") String repId, @Context HttpHeaders headers) 
-			throws Exception {
+	throws Exception {
 		ConfigTemplate ct = rcc.getConfigTemplate("native");
 		Map<String, String> queryParams = new HashMap<>();
 		queryParams.put("Repository ID", repId);
@@ -139,7 +135,6 @@ public class RepositoryController  {
 		return true;
 	}
 	
-	
 	@POST
 	@Path("/repositories_sparql/{repId}")
     @Produces({"application/json", "application/sparql-results+json"})
@@ -149,7 +144,6 @@ public class RepositoryController  {
     		@QueryParam("queryLn") boolean infer, @QueryParam("queryLn") int timeout,
     		@QueryParam("queryLn") boolean distinct, @QueryParam("queryLn") long limit,
     		@QueryParam("offset") long offset) throws WebApplicationException, HTTPException, RDF4JException, IOException {
-		
 		System.out.println("RepositoryController.createSparql");
 		System.out.println("repId=" + repId);
 		System.out.println("query=" + query);
@@ -173,24 +167,18 @@ public class RepositoryController  {
 		FileFormatServiceRegistry<? extends FileFormat, ?> registry;
 		
 		try {
-			
 			if (query instanceof GraphQuery) {
-				
 				if (!headersOnly) {
 					GraphQuery gQuery = (GraphQuery) query;
-					
 					final GraphQueryResult qqr = distinct ? QueryResults.distinctResults(gQuery.evaluate())
 							: gQuery.evaluate();
-
 					queryResult = QueryResults.limitResults(qqr, limit, offset);
 				}
 				registry = RDFWriterRegistry.getInstance();
 			}
 			else {
-
 				throw new ClientHTTPException(SC_BAD_REQUEST,
 						"Unsupported query type: " + query.getClass().getName());
-				
 			}
 		}
 		catch (QueryInterruptedException e) {
@@ -204,7 +192,6 @@ public class RepositoryController  {
 				throw new ServerHTTPException("Query evaluation error: " + e.getMessage());
 			}
 		}	
-		
 		return (GraphQuery) queryResult;
 	}
 	
