@@ -122,9 +122,9 @@ public class RepositoryController  {
 	
 	@POST
 	@Path("/repositories/{repId}")
-    @Produces({"application/json", "application/sparql-results+json"})
+	@Produces({"application/json", "application/sparql-results+json"})
 	@Consumes(Protocol.FORM_MIME_TYPE)
-    public boolean createForm(@Context UriInfo uriInfo, @PathParam("repId") String repId,
+    	public boolean createForm(@Context UriInfo uriInfo, @PathParam("repId") String repId,
     		@FormParam("query") String query, @FormParam("queryLn") String queryLn,
     		@FormParam("queryLn") String infer, @FormParam("queryLn") String timeout,
     		@FormParam("queryLn") String distinct, @FormParam("queryLn") String limit,
@@ -137,9 +137,9 @@ public class RepositoryController  {
 	
 	@POST
 	@Path("/repositories_sparql/{repId}")
-    @Produces({"application/json", "application/sparql-results+json"})
+    	@Produces({"application/json", "application/sparql-results+json"})
 	@Consumes(Protocol.SPARQL_QUERY_MIME_TYPE)
-    public Query createSparql(@Context UriInfo uriInfo, @PathParam("repId") String repId,
+    	public Query createSparql(@Context UriInfo uriInfo, @PathParam("repId") String repId,
     		@QueryParam("query") Query query, @QueryParam("queryLn") QueryLanguage queryLn,
     		@QueryParam("infer") boolean infer, @QueryParam("timeout") int timeout,
     		@QueryParam("distinct") boolean distinct, @QueryParam("limit") long limit,
@@ -148,19 +148,19 @@ public class RepositoryController  {
 		System.out.println("repId=" + repId);
 		System.out.println("query=" + query);
 		
-	ConfigTemplate ct = rcc.getConfigTemplate("native");
-        System.out.println("ConfigTemplate: " + ct);
-        Map<String, String> queryParams = new HashMap<>();
-        queryParams.put("Repository ID", repId);
-        String strConfTemplate = ct.render(queryParams);
-        System.out.println("ConfigTemplate render: " + strConfTemplate);
-        RepositoryConfig rc = rcc.updateRepositoryConfig(strConfTemplate);
-        System.out.println("RepositoryConfig.id: " + rc.getID());
-        System.out.println("RepositoryConfig: " + rc.toString());
+		ConfigTemplate ct = rcc.getConfigTemplate("native");
+		System.out.println("ConfigTemplate: " + ct);
+        	Map<String, String> queryParams = new HashMap<>();
+        	queryParams.put("Repository ID", repId);
+        	String strConfTemplate = ct.render(queryParams);
+        	System.out.println("ConfigTemplate render: " + strConfTemplate);
+        	RepositoryConfig rc = rcc.updateRepositoryConfig(strConfTemplate);
+        	System.out.println("RepositoryConfig.id: " + rc.getID());
+        	System.out.println("RepositoryConfig: " + rc.toString());
 
-        Repository repository = repositoryManager.getRepository(repId);
-        repository.init();
-        RepositoryConnection repositoryCon = repository.getConnection();
+        	Repository repository = repositoryManager.getRepository(repId);
+        	repository.init();
+        	RepositoryConnection repositoryCon = repository.getConnection();
 		
 		boolean headersOnly = false;
 		Object queryResult = null;
