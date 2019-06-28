@@ -1,24 +1,24 @@
-<<<<<<< HEAD
 bin/org.eclipse.rdf4j.jaxrs/org.eclipse.rdf4j/org.eclipse.rdf4j.jaxrs/target/exam/ed2054e1-facc-4466-abd6-260bafe6c901/examples/karaf-websocket-example/src/main/java/org/apache/karaf/examples/websocket/WebsocketExampleServlet.class
 bin/org.eclipse.rdf4j.jaxrs/org.eclipse.rdf4j/org.eclipse.rdf4j.jaxrs/target/exam/ed2054e1-facc-4466-abd6-260bafe6c901/examples/karaf-websocket-example/src/main/java/org/apache/karaf/examples/websocket/WebSocketExample.class
 bin/org.eclipse.rdf4j.jaxrs/org.eclipse.rdf4j/org.eclipse.rdf4j.jaxrs/target/exam/ed2054e1-facc-4466-abd6-260bafe6c901/examples/karaf-websocket-example/src/main/java/org/apache/karaf/examples/websocket/WebSocketExample$NotificationThread.class
 bin/org.eclipse.rdf4j.jaxrs/org.eclipse.rdf4j/org.eclipse.rdf4j.jaxrs/target/exam/ed2054e1-facc-4466-abd6-260bafe6c901/examples/karaf-deployer-example/src/main/java/org/apache/karaf/examples/deployer/ExampleDeployer.class
 bin/org.eclipse.rdf4j.jaxrs/org.eclipse.rdf4j/org.eclipse.rdf4j.jaxrs/target/exam/ed2054e1-facc-4466-abd6-260bafe6c901/examples/karaf-dump-example/src/main/java/org/apache/karaf/examples/dump/ScreenshotDumpProvider.class
-=======
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# production
-build
-distrib
-target
-bin
-
-# Intellij
-.idea/
-*.iml
-*.iws
-
-# misc
-.DS_Store
-/target/
->>>>>>> master
+target/classes/org/eclipse/rdf4j/examples/repository/Example14AddRDFToDatabase.class
+target/classes/org/eclipse/rdf4j/examples/repository/Example13AddRDFToDatabase.class
+target/classes/org/eclipse/rdf4j/examples/model/Example09Filter.class
+target/classes/org/eclipse/rdf4j/examples/model/Example05BlankNode.class
+target/classes/org/eclipse/rdf4j/examples/model/Example01BuildModel.class
+target/classes/org/eclipse/rdf4j/examples/function/PalindromeFunction.class
+target/classes/org/eclipse/rdf4j/examples/model/vocabulary/EX.class
+target/classes/org/eclipse/rdf4j/examples/model/Example12BuildModelWithNamedGraphs.class
+target/classes/org/eclipse/rdf4j/examples/model/Example07WriteTurtle.class
+target/classes/org/eclipse/rdf4j/examples/model/Example03LiteralDatatypes.class
+target/classes/org/eclipse/rdf4j/examples/model/Example02BuildModel.class
+target/classes/org/eclipse/rdf4j/examples/model/Example11SinglePropertyValue.class
+target/classes/org/eclipse/rdf4j/examples/model/Example10PropertyValues.class
+target/classes/org/eclipse/rdf4j/examples/model/Example04LanguageTags.class
+target/classes/org/eclipse/rdf4j/examples/repository/Example16SPARQLConstructQuery.class
+target/classes/org/eclipse/rdf4j/examples/model/Example06WriteRdfXml.class
+target/classes/example-data-artists.ttl
+target/classes/org/eclipse/rdf4j/examples/model/Example08ReadTurtle.class
+target/classes/org/eclipse/rdf4j/examples/repository/Example15SimpleSPARQLQuery.class
