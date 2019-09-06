@@ -4,9 +4,16 @@
 
 ## Собрать
 
+Перейти в подкаталог org.eclipse.rdf4j.jaxrs и выполнить из него
+
+````mvn clean install -P quick````
+
 ## Запустить Karaf
 
 ## Развернуть сборку системы в Karaf
+
+Перед установкой надо сначала собрать систему (см. раздел "Сборка").
+
 ### Добавить репозитории фич
 
 * feature:repo-add mvn:ru.agentlab.rdf4j.server/ru.agentlab.rdf4j.server.features/0.0.1-SNAPSHOT/xml

@@ -3,72 +3,28 @@ package org.eclipse.rdf4j.http.server.repository;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
-
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.GET;
-
 import javax.ws.rs.Path;
-
 import javax.ws.rs.PathParam;
-
-import javax.ws.rs.QueryParam;
-
-import javax.ws.rs.WebApplicationException;
-
-import javax.ws.rs.core.Response;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.eclipse.rdf4j.RDF4JException;
-import org.eclipse.rdf4j.examples.model.Model;
-import org.eclipse.rdf4j.examples.model.ModelBuilder;
-import org.eclipse.rdf4j.http.protocol.Protocol;
-
-import org.eclipse.rdf4j.http.server.ProtocolUtil;
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.eclipse.rdf4j.model.vocabulary.FOAF;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.config.ConfigTemplate;
-
 import org.eclipse.rdf4j.repository.config.RepositoryConfig;
-
 import org.eclipse.rdf4j.repository.manager.RepositoryManager;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFWriter;
-import org.eclipse.rdf4j.rio.RDFWriterFactory;
-import org.eclipse.rdf4j.rio.RDFWriterRegistry;
 import org.eclipse.rdf4j.rio.Rio;
 import org.osgi.service.component.annotations.Component;
-
 import org.osgi.service.component.annotations.Reference;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
-
-import org.eclipse.rdf4j.RDF4JException;
-import org.eclipse.rdf4j.repository.Repository;
-import org.eclipse.rdf4j.repository.config.ConfigTemplate;
-import org.eclipse.rdf4j.repository.config.RepositoryConfig;
-import org.eclipse.rdf4j.repository.manager.RepositoryManager;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
-
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.util.ModelBuilder;
 
 @Path("/rdf4j-server")
 @Component(service = StatementsController.class, property = { "osgi.jaxrs.resource=true" })

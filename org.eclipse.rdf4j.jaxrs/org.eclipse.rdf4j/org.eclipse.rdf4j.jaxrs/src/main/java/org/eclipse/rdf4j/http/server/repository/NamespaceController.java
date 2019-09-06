@@ -9,9 +9,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.eclipse.rdf4j.RDF4JException;
-import org.eclipse.rdf4j.http.server.ClientHTTPException;
-import org.eclipse.rdf4j.http.server.ServerHTTPException;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.manager.RepositoryManager;
@@ -25,7 +24,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.annotation.Resource;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.PUT;
 
@@ -135,7 +133,7 @@ public class NamespaceController {
 	@DELETE 
 	@Path ("/repositories/{repId}/namespaces/{prefix}")
 	public void delNamesp ( @PathParam("repId") String repId,
-				@PathParam("prefix") String prefix ) throws ClientHTTPException, ServerHTTPException, IOException {
+				@PathParam("prefix") String prefix ) throws IOException {
 		Repository repository = null;
 		RepositoryConnection repositoryCon  = null;
 		  
