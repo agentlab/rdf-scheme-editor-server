@@ -1,14 +1,26 @@
 # expert-system-server
 
-Нужна версия rdf4j 3.0.0-SNAPSHOT, не 3.0-SNAPSHOT
+JAX-RS OSGi HTTP Whiteboard version of RDF4J server (with Sparql Endpoint and other REST API).
 
 ## Собрать
 
-Перейти в подкаталог org.eclipse.rdf4j.jaxrs и выполнить из него
+Перейти в подкаталог org.eclipse.rdf4j.jaxrs и выполнить из него компиляцию с прогоном тестов
 
-````mvn clean install -P quick````
+```
+mvn clean install
+```
+
+Компиляция без прогона тестов (отрабатывает быстрее)
+
+```
+mvn clean install -P quick
+```
 
 ## Запустить Karaf
+
+Из корневой папки бинарников карафа, не из папки bin!
+
+https://karaf.apache.org/get-started.html
 
 ## Развернуть сборку системы в Karaf
 
@@ -16,23 +28,28 @@
 
 ### Добавить репозитории фич
 
-* feature:repo-add mvn:ru.agentlab.rdf4j.server/ru.agentlab.rdf4j.server.features/0.0.1-SNAPSHOT/xml
+* `feature:repo-add mvn:ru.agentlab.rdf4j/ru.agentlab.rdf4j.features/0.0.1-SNAPSHOT/xml`
 
 ### Установить фичи, активировать плагины
 
-* feature:install org.eclipse.rdf4j
-* feature:install org.eclipse.rdf4j.jaxrs
+Главная фича, которая устанавливает все (если все ок, ее достаточно)
 
+* `feature:install ru.agentlab.rdf4j.jaxrs`
+
+На случай, если ошибки, можно устанавливать последовательно фичи
+
+* `feature:install org.eclipse.rdf4j`
+* `feature:install karaf-scr`
+* `feature:install karaf-rest-all`
+* `feature:install ru.agentlab.rdf4j.jaxrs.deps`
+* `feature:install ru.agentlab.rdf4j.jaxrs`
 
 ### Разработка
 
-* bundle:watch *
+* `bundle:watch *` -- для того, чтобы Karaf следил за локальным репозиторием и переустанавливал бандлы после пересборки
 
-* list и la
+* `bundle:list` и `la` -- список всех плагинов
+* `feature:list` -- список всех фич
 
-* display
-* log:set DEBUG
-
-```
-type=memory&Repository+ID=test55&Repository+title=&Persist=true&Sync+delay=0&EvaluationStrategyFactory=org.eclipse.rdf4j.query.algebra.evaluation.impl.StrictEvaluationStrategyFactory
-```
+* `display` -- показать логи
+* `log:set DEBUG` -- установка фильтра логов в подробный режим
