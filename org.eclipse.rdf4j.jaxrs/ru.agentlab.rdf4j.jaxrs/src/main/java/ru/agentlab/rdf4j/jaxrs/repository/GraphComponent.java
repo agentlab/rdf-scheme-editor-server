@@ -151,8 +151,12 @@ public class GraphComponent {
         if (repository == null)
             throw new WebApplicationException("Repository with id=" + repId + " not found", NOT_FOUND);
         
+        if (fileName.isEmpty())
+            return Response.noContent().build();
+        
         StreamingOutput fileStream = null;
-
+        
+               
         try {
             ValueFactory vf = repository.getValueFactory();
 
