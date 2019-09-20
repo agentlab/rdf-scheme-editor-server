@@ -127,7 +127,7 @@ public class GraphComponent {
     public static List<Statement> getFileContentAsStatements(String fileName, String baseURI) {
         List<Statement> statements = null;
         try {
-            String content = getFileContentAsString(fileName);
+            String content = fileName;//getFileContentAsString(fileName);
             StringReader reader = new StringReader(content);
             Model model;
             model = Rio.parse(reader, baseURI, RDFFormat.TURTLE);
