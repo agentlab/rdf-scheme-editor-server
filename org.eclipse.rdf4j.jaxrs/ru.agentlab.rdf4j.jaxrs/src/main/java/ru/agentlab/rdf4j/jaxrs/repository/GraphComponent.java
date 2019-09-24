@@ -4,9 +4,14 @@ import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 import java.io.IOException;
+import java.io.StringReader;
+import java.util.Iterator;
+import java.util.List;
+import java.net.URL;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.WebApplicationException;
@@ -16,20 +21,29 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
+import org.eclipse.rdf4j.RDF4JException;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Charsets;
+import com.google.common.collect.Lists;
+import com.google.common.io.Resources;
 
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
@@ -98,6 +112,62 @@ public class GraphComponent {
         return Response.ok(fileStream, MediaType.APPLICATION_OCTET_STREAM).header("content-disposition", "attachment; filename = myfile.pdf").build();
     }
 
+    public static String getFileContentAsString(String bodyName) {
+        // for future used
+        String content = "";
+        try {
+            URL fileURL = GraphComponent.class.getResource(bodyName);
+            content = Resources.toString(fileURL, Charsets.UTF_8);
+        } catch (IOException ex) {
+            System.out.println("Error getting turle file");
+            ex.printStackTrace();
+        }
+        return content;
+    }
+
+    public static List<Statement> getFileContentAsStatements(String bodyName, String baseURI) {
+        List<Statement> statements = null;
+        try {
+            String content = bodyName;
+            StringReader reader = new StringReader(content);
+            Model model;
+            model = Rio.parse(reader, baseURI, RDFFormat.TURTLE);
+            Iterator<Statement> it = model.iterator();
+            statements = Lists.newArrayList(it);
+        } catch (IOException | RDFParseException | UnsupportedRDFormatException ex) {
+            System.out.println("Error getting turtle file");
+            ex.printStackTrace();
+        }
+        return statements;
+    }
+
+    @POST
+    @Path("/repositories/{repId}/rdf-graphs/{graphName}")
+    public Response doPostGraphStatement(@PathParam("repId") String repId, @PathParam("graphName") String graphName, @Context UriInfo uri, String bodyName) throws IOException {
+        System.out.println("Post graph statement");
+        System.out.println("repId = " + repId);
+        System.out.println("graphName = " + graphName);
+
+        Repository repository = repositoryManager.getRepository(repId);
+        if (repository == null)
+            throw new WebApplicationException("Repository with id=" + repId + " not found", NOT_FOUND);
+               
+        try {
+            ValueFactory vf = repository.getValueFactory();
+            String myUri = uri.getBaseUri().toString();
+            IRI IRIgraph = vf.createIRI(myUri);
+            Resource[] graph = new Resource[] { IRIgraph };
+            final Repository r = repository;
+            for (Statement stm : getFileContentAsStatements(bodyName, myUri)) {
+                r.getConnection().add(stm, graph);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        return Response.noContent().build();
+    }
+
     @DELETE
     @Path("/repositories/{repId}/rdf-graphs/{graphName}")
     public void deleteGraph(@PathParam("repId") String repId, @PathParam("graphName") String graphName, @Context UriInfo uri) throws IOException {
@@ -109,7 +179,7 @@ public class GraphComponent {
         if (repository == null)
             throw new WebApplicationException("Repository with id=" + repId + " not found", NOT_FOUND);
 
-        try (RepositoryConnection repositoryCon = repository.getConnection()){
+        try (RepositoryConnection repositoryCon = repository.getConnection()) {
             ValueFactory vf = repository.getValueFactory();
 
             // @Context UriInfo uri;
