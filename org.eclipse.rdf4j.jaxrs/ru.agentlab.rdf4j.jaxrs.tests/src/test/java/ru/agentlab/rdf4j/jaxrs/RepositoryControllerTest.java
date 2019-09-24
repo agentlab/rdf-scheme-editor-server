@@ -295,4 +295,45 @@ public class RepositoryControllerTest extends KarafTestSupport {
 		RepositoryConnection repositoryCon = repository.getConnection();
 		assertThat("repositoryCon.size", repositoryCon.size(), equalTo(4L));
 	}
+    
+    @Test
+    public void postStatementsToGraphShouldWorkOk() throws IOException {
+        String repId = "id1238";
+        assertNull(manager.getRepositoryInfo(repId));
+        Repository repository = manager.getOrCreateRepository(repId, "native-rdfs", null);
+        assertNotNull(repository);
+        assertNotNull(manager.getRepositoryInfo(repId));
+
+        String address = ENDPOINT_ADDRESS + repId + "/rdf-graphs/graph1";
+        WebClient client = WebClient.create(address);
+
+        String file = "/testcases/default-graph-1.ttl";
+        RDFFormat dataFormat = Rio.getParserFormatForFileName(file).orElse(RDFFormat.RDFXML);
+        client.type(dataFormat.getDefaultMIMEType());
+        client.accept(MediaType.WILDCARD);
+
+        InputStream dataStream = RepositoryControllerTest.class.getResourceAsStream(file);
+        assertNotNull(dataStream);
+        assertThat("dataStream.available", dataStream.available(), greaterThan(0));
+
+        System.out.println("POST on address=" + address);
+        Response response = client.post(dataStream);
+        System.out.println("response.status=" + response.getStatusInfo().getReasonPhrase());
+        System.out.println("response.body=" + response.readEntity(String.class));
+        assertEquals(204, response.getStatus());
+        client.close();
+
+        RepositoryConnection repositoryCon = repository.getConnection();
+        assertThat("repositoryCon.size", repositoryCon.size(), equalTo(4L));
+        
+        WebClient client2 = WebClient.create(address);
+        client2.accept(MediaType.WILDCARD);
+        System.out.println("GET on address=" + address);
+        Response response2 = client2.get();
+        System.out.println("response2.status=" + response2.getStatusInfo().getReasonPhrase());
+        System.out.println("response2.body=" + response2.readEntity(String.class));
+        assertEquals(200, response2.getStatus());
+        assertNull(manager.getRepositoryInfo(repId));
+        client2.close();
+    }
 }
