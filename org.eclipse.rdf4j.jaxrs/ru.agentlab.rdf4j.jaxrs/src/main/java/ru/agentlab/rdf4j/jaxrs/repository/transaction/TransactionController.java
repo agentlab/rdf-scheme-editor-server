@@ -76,7 +76,7 @@ public class TransactionController {
 
     @PUT
     @Path("/repositories/{repId}/transactions/{txnId}")
-    public void handleRequestInternal(@Context HttpServletRequest request, @Context HttpServletResponse response, @PathParam("repId") String repId, @PathParam("txnId") String transactionId) throws Exception {
+    public void CreateTransaction(@Context HttpServletRequest request, @Context HttpServletResponse response, @PathParam("repId") String repId, @PathParam("txnId") String transactionId) throws Exception {
         String reqMethod = request.getMethod();
         logger.debug("transaction id: {}", transactionId);
         logger.debug("request content type: {}", request.getContentType());
@@ -93,7 +93,10 @@ public class TransactionController {
                 throw new WebApplicationException("unable to find registerd connection for transaction id '" + transactionId + "'", Response.Status.BAD_REQUEST);
             }
             getExportStatementsResult(connection, transactionId, request, response);
+            connection.close();
             logger.info("{} txn size request finished", reqMethod);
+            response.setHeader("Location", transactionId);
+            
         } else if (action == Action.SIZE) {
             RepositoryConnection connection = ActiveTransactionRegistry.INSTANCE.getTransactionConnection(transactionId);
 
@@ -102,6 +105,7 @@ public class TransactionController {
                 throw new WebApplicationException("unable to find registerd connection for transaction id '" + transactionId + "'", Response.Status.BAD_REQUEST);
             }
             getSize(connection, transactionId, request);
+            connection.close();
             logger.info("{} txn size request finished", reqMethod);
         }
         if (action == QUERY) {
@@ -112,6 +116,7 @@ public class TransactionController {
                 throw new WebApplicationException("unable to find registerd connection for transaction id '" + transactionId + "'", Response.Status.BAD_REQUEST);
             }
             processQuery(connection, transactionId, request, response);
+            connection.close();
         } else {
             throw new WebApplicationException("Action not supported: " + action, Response.Status.METHOD_NOT_ALLOWED);
         }
