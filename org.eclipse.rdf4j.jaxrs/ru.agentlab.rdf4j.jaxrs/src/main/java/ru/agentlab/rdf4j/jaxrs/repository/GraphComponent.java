@@ -151,9 +151,6 @@ public class GraphComponent {
         Repository repository = repositoryManager.getRepository(repId);
         if (repository == null)
             throw new WebApplicationException("Repository with id=" + repId + " not found", NOT_FOUND);
-        
-        if (fileName.isEmpty())
-            return Response.noContent().build();
                
         try {
             ValueFactory vf = repository.getValueFactory();
@@ -168,7 +165,7 @@ public class GraphComponent {
             e.printStackTrace();
         }
         
-        return Response.ok().build();
+        return Response.noContent().build();
     }
 
     @DELETE
