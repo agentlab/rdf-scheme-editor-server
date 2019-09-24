@@ -112,11 +112,11 @@ public class GraphComponent {
         return Response.ok(fileStream, MediaType.APPLICATION_OCTET_STREAM).header("content-disposition", "attachment; filename = myfile.pdf").build();
     }
 
-    public static String getFileContentAsString(String fileName) {
+    public static String getFileContentAsString(String bodyName) {
         // for future used
         String content = "";
         try {
-            URL fileURL = GraphComponent.class.getResource(fileName);
+            URL fileURL = GraphComponent.class.getResource(bodyName);
             content = Resources.toString(fileURL, Charsets.UTF_8);
         } catch (IOException ex) {
             System.out.println("Error getting turle file");
@@ -125,10 +125,10 @@ public class GraphComponent {
         return content;
     }
 
-    public static List<Statement> getFileContentAsStatements(String fileName, String baseURI) {
+    public static List<Statement> getFileContentAsStatements(String bodyName, String baseURI) {
         List<Statement> statements = null;
         try {
-            String content = fileName;
+            String content = bodyName;
             StringReader reader = new StringReader(content);
             Model model;
             model = Rio.parse(reader, baseURI, RDFFormat.TURTLE);
@@ -143,7 +143,7 @@ public class GraphComponent {
 
     @POST
     @Path("/repositories/{repId}/rdf-graphs/{graphName}")
-    public Response doPostGraphStatement(@PathParam("repId") String repId, @PathParam("graphName") String graphName, @Context UriInfo uri, String fileName) throws IOException {
+    public Response doPostGraphStatement(@PathParam("repId") String repId, @PathParam("graphName") String graphName, @Context UriInfo uri, String bodyName) throws IOException {
         System.out.println("Post graph statement");
         System.out.println("repId = " + repId);
         System.out.println("graphName = " + graphName);
@@ -158,7 +158,7 @@ public class GraphComponent {
             IRI IRIgraph = vf.createIRI(myUri);
             Resource[] graph = new Resource[] { IRIgraph };
             final Repository r = repository;
-            for (Statement stm : getFileContentAsStatements(fileName, myUri)) {
+            for (Statement stm : getFileContentAsStatements(bodyName, myUri)) {
                 r.getConnection().add(stm, graph);
             }
         } catch (Exception e) {
