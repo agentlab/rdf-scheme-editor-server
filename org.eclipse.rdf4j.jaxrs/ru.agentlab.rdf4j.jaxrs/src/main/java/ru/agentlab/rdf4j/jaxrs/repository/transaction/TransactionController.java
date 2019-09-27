@@ -74,9 +74,20 @@ public class TransactionController {
     public void deactivate() {
         logger.info("Deactivate " + this.getClass().getSimpleName());
     }
-    
     @POST
     @Path("/repositories/{repId}/transactions")
+    public void createTransaction(@Context HttpServletRequest request, @Context HttpServletResponse response, @PathParam("repId") String repId) throws Exception {
+        logger.info("POST transaction start");
+        Repository repository = repositoryManager.getRepository(repId);
+        if (repository == null)
+            throw new WebApplicationException("Repository with id=" + repId + " not found", Response.Status.NOT_FOUND);
+
+        logger.info("transaction started");
+        response.setHeader("Location", "/rdf4j-server/repositories/" + repId + "/transactions");
+    }
+
+    @PUT
+    @Path("/repositories/{repId}/transactions/{txnId}")
     public void updateTransaction(@Context HttpServletRequest request, @Context HttpServletResponse response, @PathParam("repId") String repId, @PathParam("txnId") String transactionId) throws Exception {
         String reqMethod = request.getMethod();
         logger.debug("transaction id: {}", transactionId);
@@ -86,27 +97,42 @@ public class TransactionController {
         // the only txn operation that does not require the action parameter).
         final String actionParam = request.getParameter(Protocol.ACTION_PARAM_NAME);
         final Action action = actionParam != null ? Action.valueOf(actionParam) : Action.ROLLBACK;
-        RepositoryConnection connection = ActiveTransactionRegistry.INSTANCE.getTransactionConnection(transactionId);
-        if (connection == null) {
-            logger.warn("could not find connection for transaction id {}", transactionId);
-            throw new WebApplicationException("unable to find registerd connection for transaction id '" + transactionId + "'", Response.Status.BAD_REQUEST);
-        }
         if (action == Action.GET) {
+            RepositoryConnection connection = ActiveTransactionRegistry.INSTANCE.getTransactionConnection(transactionId);
+
+            if (connection == null) {
+                logger.warn("could not find connection for transaction id {}", transactionId);
+                throw new WebApplicationException("unable to find registerd connection for transaction id '" + transactionId + "'", Response.Status.BAD_REQUEST);
+            }
             getExportStatementsResult(connection, transactionId, request, response);
-            logger.info("{} txn getExportStatementsResult request finished", reqMethod);
+            connection.close();
+            logger.info("{} txn size request finished", reqMethod);
+            response.setHeader("Location", "/rdf4j-server/repositories/" + repId + "/transactions/" + transactionId);
+            connection.close();
             
         } else if (action == Action.SIZE) {
+            RepositoryConnection connection = ActiveTransactionRegistry.INSTANCE.getTransactionConnection(transactionId);
+
+            if (connection == null) {
+                logger.warn("could not find connection for transaction id {}", transactionId);
+                throw new WebApplicationException("unable to find registerd connection for transaction id '" + transactionId + "'", Response.Status.BAD_REQUEST);
+            }
             getSize(connection, transactionId, request);
-            logger.info("{} txn SIZE request finished", reqMethod);
+            connection.close();
+            logger.info("{} txn size request finished", reqMethod);
         }
         if (action == QUERY) {
+            RepositoryConnection connection = ActiveTransactionRegistry.INSTANCE.getTransactionConnection(transactionId);
+
+            if (connection == null) {
+                logger.warn("could not find connection for transaction id {}", transactionId);
+                throw new WebApplicationException("unable to find registerd connection for transaction id '" + transactionId + "'", Response.Status.BAD_REQUEST);
+            }
             processQuery(connection, transactionId, request, response);
-            logger.info("{} txn QUERY request finished", reqMethod);
+            connection.close();
         } else {
             throw new WebApplicationException("Action not supported: " + action, Response.Status.METHOD_NOT_ALLOWED);
         }
-        response.setHeader("Location", "/rdf4j-server/repositories/" + repId + "/transactions/" + transactionId);
-        connection.close();
     }
 
     private void getExportStatementsResult(RepositoryConnection conn, String txnId, HttpServletRequest request, HttpServletResponse response) throws ClientHTTPException {
