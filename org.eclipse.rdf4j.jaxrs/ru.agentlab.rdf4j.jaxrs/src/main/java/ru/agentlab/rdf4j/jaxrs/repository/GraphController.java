@@ -5,9 +5,9 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URL;
 import java.util.Iterator;
 import java.util.List;
-import java.net.URL;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -21,7 +21,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
 
-import org.eclipse.rdf4j.RDF4JException;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
@@ -47,15 +46,15 @@ import com.google.common.io.Resources;
 
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
-@Component(service = GraphComponent.class, property = { "osgi.jaxrs.resource=true" })
+@Component(service = GraphController.class, property = { "osgi.jaxrs.resource=true" })
 @Path("/rdf4j-server")
-public class GraphComponent {
-    private static final Logger logger = LoggerFactory.getLogger(GraphComponent.class);
+public class GraphController {
+    private static final Logger logger = LoggerFactory.getLogger(GraphController.class);
 
     @Reference
     private RepositoryManagerComponent repositoryManager;
 
-    public GraphComponent() {
+    public GraphController() {
         System.out.println("Started");
     }
 
@@ -116,7 +115,7 @@ public class GraphComponent {
         // for future used
         String content = "";
         try {
-            URL fileURL = GraphComponent.class.getResource(bodyName);
+            URL fileURL = GraphController.class.getResource(bodyName);
             content = Resources.toString(fileURL, Charsets.UTF_8);
         } catch (IOException ex) {
             System.out.println("Error getting turle file");
