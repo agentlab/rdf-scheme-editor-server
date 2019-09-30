@@ -39,10 +39,10 @@ import org.slf4j.LoggerFactory;
 import ru.agentlab.rdf4j.jaxrs.ServerHTTPException;
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
-@Component(service = NamespacesComponent.class, property = { "osgi.jaxrs.resource=true" })
+@Component(service = NamespacesController.class, property = { "osgi.jaxrs.resource=true" })
 @Path("/rdf4j-server")
-public class NamespacesComponent {
-    private static final Logger logger = LoggerFactory.getLogger(NamespacesComponent.class);
+public class NamespacesController {
+    private static final Logger logger = LoggerFactory.getLogger(NamespacesController.class);
 
     @Reference
     private RepositoryManagerComponent repositoryManager;

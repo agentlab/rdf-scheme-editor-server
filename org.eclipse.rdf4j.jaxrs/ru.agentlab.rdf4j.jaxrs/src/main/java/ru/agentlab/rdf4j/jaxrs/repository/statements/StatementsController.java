@@ -13,6 +13,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
@@ -30,11 +31,6 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.eclipse.rdf4j.http.protocol.Protocol;
 import org.eclipse.rdf4j.http.protocol.error.ErrorInfo;
 import org.eclipse.rdf4j.http.protocol.error.ErrorType;
-
-import ru.agentlab.rdf4j.jaxrs.HTTPException;
-import ru.agentlab.rdf4j.jaxrs.repository.ProtocolUtils;
-import ru.agentlab.rdf4j.jaxrs.util.HttpServerUtil;
-import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
@@ -60,6 +56,11 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import ru.agentlab.rdf4j.jaxrs.HTTPException;
+import ru.agentlab.rdf4j.jaxrs.repository.ProtocolUtils;
+import ru.agentlab.rdf4j.jaxrs.util.HttpServerUtil;
+import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
 @Path("/rdf4j-server")
 @Component(service=StatementsController.class, property={"osgi.jaxrs.resource=true"})
@@ -420,5 +421,40 @@ public class StatementsController {
 			throw new WebApplicationException("Invalid value for parameter '" + paramName + "': " + paramValue,
 					BAD_REQUEST);
 		}
+	}
+	
+	@DELETE
+    @Path("/repositories/{repId}/statements")
+	public void deleteStatements(@Context HttpHeaders headers,
+            @PathParam("repId") String repId,
+            @QueryParam("context") String[] context,
+            @QueryParam("subj") String subjStr,
+            @QueryParam("pred") String predStr,
+            @QueryParam("obj") String objStr) throws RepositoryException, IOException, HTTPException {
+	    logger.info("DELETE data from repository");
+	    
+	    Repository repository = repositoryManager.getRepository(repId);
+	    if(repository == null)
+            throw new WebApplicationException("Cannot find repository '" + repId, NOT_FOUND);
+	    
+        ValueFactory vf = repository.getValueFactory();
+
+        Resource subj = Protocol.decodeResource(subjStr, vf);
+        IRI pred = Protocol.decodeURI(predStr, vf);
+        Value obj = Protocol.decodeValue(objStr, vf);
+        Resource[] contexts = Protocol.decodeContexts(context, vf);
+
+        try (RepositoryConnection repositoryCon = repository.getConnection()) {
+            repositoryCon.remove(subj, pred, obj, contexts);
+        } catch (RepositoryException e) {
+            if (e.getCause() != null && e.getCause() instanceof HTTPException) {
+                // custom signal from the backend, throw as HTTPException
+                // directly
+                // (see SES-1016).
+                throw (HTTPException) e.getCause();
+            } else {
+                throw new WebApplicationException("Repository update error: " + e.getMessage(), e);
+            }
+        }
 	}
 }
