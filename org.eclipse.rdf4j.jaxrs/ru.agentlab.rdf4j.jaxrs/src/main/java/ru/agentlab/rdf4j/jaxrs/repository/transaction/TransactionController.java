@@ -1,6 +1,8 @@
 package ru.agentlab.rdf4j.jaxrs.repository.transaction;
 
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.IsolationLevel;
+import org.eclipse.rdf4j.IsolationLevels;
 import org.eclipse.rdf4j.http.protocol.Protocol;
 import org.eclipse.rdf4j.http.protocol.Protocol.*;
 import org.eclipse.rdf4j.http.protocol.error.ErrorInfo;
@@ -15,6 +17,7 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.query.BooleanQuery;
 import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.MalformedQueryException;
@@ -28,8 +31,10 @@ import org.eclipse.rdf4j.query.impl.SimpleDataset;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
+import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.RDFWriterFactory;
 import org.eclipse.rdf4j.rio.RDFWriterRegistry;
+import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
@@ -56,6 +61,8 @@ import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 @Component(service = TransactionController.class, property = { "osgi.jaxrs.resource=true" })
 @Path("/rdf4j-server")
@@ -76,16 +83,56 @@ public class TransactionController {
     }
     @POST
     @Path("/repositories/{repId}/transactions")
-    public void createTransaction(@Context HttpServletRequest request, @Context HttpServletResponse response, @PathParam("repId") String repId) throws Exception {
+    public void handleRequestInternal(@Context HttpServletRequest request, @Context HttpServletResponse response, 
+                                      @PathParam("repId") String repId) throws Exception {
         logger.info("POST transaction start");
-        Repository repository = repositoryManager.getRepository(repId);
-        if (repository == null)
-            throw new WebApplicationException("Repository with id=" + repId + " not found", Response.Status.NOT_FOUND);
 
-        logger.info("transaction started");
-        response.setHeader("Location", "/rdf4j-server/repositories/" + repId + "/transactions");
+        Repository repository = RepositoryInterceptor.getRepository(request);
+
+        
+            startTransaction(repository, request);
+            logger.info("transaction started");
+            response.setHeader("Location", "/rdf4j-server/repositories/" + repId + "/transactions");
     }
 
+    private void startTransaction(Repository repository, HttpServletRequest request)
+            throws ServerHTTPException
+    {  
+        ProtocolUtil.logRequestParameters(request);
+        IsolationLevel isolationLevel = null;
+        final String isolationLevelString = request.getParameter(Protocol.ISOLATION_LEVEL_PARAM_NAME);
+        if (isolationLevelString != null) {
+            final IRI level = SimpleValueFactory.getInstance().createIRI(isolationLevelString);
+            for (IsolationLevel standardLevel : IsolationLevels.values()) {
+                if (standardLevel.getURI().equals(level)) {
+                    isolationLevel = standardLevel;
+                    break;
+                }
+            }
+        }
+        Transaction txn = null;
+        boolean allGood = false;
+        try {
+            txn = new Transaction(repository);
+            txn.begin(isolationLevel);
+            UUID txnId1 = txn.getID();            
+            final StringBuffer txnURL = request.getRequestURL();
+            txnURL.append("/" + txnId1.toString());
+            ActiveTransactionRegistry.INSTANCE.register(txn);
+            allGood = true;
+            return;
+        } catch (RepositoryException | InterruptedException | ExecutionException e) {
+            throw new WebApplicationException("Transaction start error: " + e.getMessage(), e);
+        } finally {
+            if (!allGood) {
+                try {
+                    txn.close();
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new WebApplicationException("Transaction start error: " + e.getMessage(), e);
+                }
+            }
+        }
+    }
     @PUT
     @Path("/repositories/{repId}/transactions/{txnId}")
     public void updateTransaction(@Context HttpServletRequest request, @Context HttpServletResponse response, @PathParam("repId") String repId, @PathParam("txnId") String transactionId) throws Exception {
@@ -99,7 +146,6 @@ public class TransactionController {
         final Action action = actionParam != null ? Action.valueOf(actionParam) : Action.ROLLBACK;
         if (action == Action.GET) {
             RepositoryConnection connection = ActiveTransactionRegistry.INSTANCE.getTransactionConnection(transactionId);
-
             if (connection == null) {
                 logger.warn("could not find connection for transaction id {}", transactionId);
                 throw new WebApplicationException("unable to find registerd connection for transaction id '" + transactionId + "'", Response.Status.BAD_REQUEST);
@@ -107,8 +153,8 @@ public class TransactionController {
             getExportStatementsResult(connection, transactionId, request, response);
             connection.close();
             logger.info("{} txn size request finished", reqMethod);
-            response.setHeader("Location", "/rdf4j-server/repositories/" + repId + "/transactions/" + transactionId);
-            connection.close();
+
+
             
         } else if (action == Action.SIZE) {
             RepositoryConnection connection = ActiveTransactionRegistry.INSTANCE.getTransactionConnection(transactionId);
@@ -210,7 +256,7 @@ public class TransactionController {
             }
         } catch (QueryInterruptedException e) {
             logger.info("Query interrupted", e);
-            ActiveTransactionRegistry.INSTANCE.returnTransactionConnection(txnId);
+            ActiveTransactionRegistry.INSTANCE.returnTransaction(txnId);
             throw new WebApplicationException("Query evaluation took too long", Response.Status.SERVICE_UNAVAILABLE);
         } catch (QueryEvaluationException e) {
             logger.info("Query evaluation error", e);
