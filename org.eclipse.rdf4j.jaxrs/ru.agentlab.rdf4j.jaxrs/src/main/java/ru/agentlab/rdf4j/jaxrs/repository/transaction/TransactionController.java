@@ -71,12 +71,11 @@ public class TransactionController {
 
     @Reference
     private RepositoryManagerComponent repositoryManager;
-
+   
     @Activate
     public void activate() {
         logger.info("Activate " + this.getClass().getSimpleName());
     }
-
     @Deactivate
     public void deactivate() {
         logger.info("Deactivate " + this.getClass().getSimpleName());
@@ -86,17 +85,13 @@ public class TransactionController {
     public void handleRequestInternal(@Context HttpServletRequest request, @Context HttpServletResponse response, 
                                       @PathParam("repId") String repId) throws Exception {
         logger.info("POST transaction start");
-
-        Repository repository = RepositoryInterceptor.getRepository(request);
-
-        
+        Repository repository = RepositoryInterceptor.getRepository(request);       
             startTransaction(repository, request);
             logger.info("transaction started");
             response.setHeader("Location", "/rdf4j-server/repositories/" + repId + "/transactions");
     }
-
     private void startTransaction(Repository repository, HttpServletRequest request)
-            throws ServerHTTPException
+            throws WebApplicationException
     {  
         ProtocolUtil.logRequestParameters(request);
         IsolationLevel isolationLevel = null;
