@@ -256,7 +256,7 @@ public class TransactionController {
             }
         } catch (QueryInterruptedException e) {
             logger.info("Query interrupted", e);
-            ActiveTransactionRegistry.INSTANCE.returnTransaction(txnId);
+            ActiveTransactionRegistry.INSTANCE.returnTransactionConnection(txnId);
             throw new WebApplicationException("Query evaluation took too long", Response.Status.SERVICE_UNAVAILABLE);
         } catch (QueryEvaluationException e) {
             logger.info("Query evaluation error", e);
