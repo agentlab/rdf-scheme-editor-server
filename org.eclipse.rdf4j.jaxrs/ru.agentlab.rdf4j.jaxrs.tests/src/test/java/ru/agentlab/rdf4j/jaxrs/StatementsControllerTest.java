@@ -45,7 +45,7 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport {
     public void init() throws Exception {
         ENDPOINT_ADDRESS = "http://localhost:" + getHttpPort() + "/rdf4j-server/repositories/";
         address = ENDPOINT_ADDRESS + repId + "/statements";
-        repository = manager.getOrCreateRepository(repId, "native-rdfs", null);
+        repository = manager.getOrCreateRepository(repId, "memory", null);
         repositoryCon = repository.getConnection();
     }
 
