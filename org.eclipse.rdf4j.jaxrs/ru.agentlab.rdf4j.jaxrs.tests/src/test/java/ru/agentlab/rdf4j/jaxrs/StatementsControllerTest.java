@@ -79,18 +79,18 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport {
         Response response2 = client2.get();
 
         InputStream dataStream2 = RepositoryControllerTest.class.getResourceAsStream(file);
-        Model modelOurFile = Rio.parse(dataStream2,"",RDFFormat.TURTLE);
+        Model modelFromFile = Rio.parse(dataStream2,"",RDFFormat.TURTLE);
 
         String gotString = response2.readEntity(String.class);
         assertEquals(200, response2.getStatus());
         System.out.println("Response.getStatus():" + response2.getStatus());
 
         Reader reader = new StringReader(gotString);
-        Model gotModel = Rio.parse(reader,"", RDFFormat.TURTLE);
+        Model modelFromServer = Rio.parse(reader,"", RDFFormat.TURTLE);
 
         //isSubset
-        assertTrue(isSubset(modelOurFile,gotModel));
-        System.out.println("OurFileIsSubset: " + isSubset(modelOurFile,gotModel));
+        assertTrue(isSubset(modelFromFile,modelFromServer));
+        System.out.println("OurFileIsSubset: " + isSubset(modelFromFile, modelFromServer));
 
         client2.close();
     }
