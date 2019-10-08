@@ -83,12 +83,12 @@ public class TransactionController {
     @POST
     @Path("/repositories/{repId}/transactions")
     public void handleRequestInternal(@Context HttpServletRequest request, @Context HttpServletResponse response, 
-                                      @PathParam("repId") String repId) throws Exception {
+                                      @PathParam("repId") String repId, String transactionId) throws Exception {
         logger.info("POST transaction start");
         Repository repository = RepositoryInterceptor.getRepository(request);       
             startTransaction(repository, request);
             logger.info("transaction started");
-            response.setHeader("Location", "/rdf4j-server/repositories/" + repId + "/transactions");
+            response.setHeader("Location", "/rdf4j-server/repositories/" + repId + "/transactions/" + transactionId);
     }
     private void startTransaction(Repository repository, HttpServletRequest request)
             throws WebApplicationException
@@ -113,7 +113,7 @@ public class TransactionController {
             UUID txnId1 = txn.getID();            
             final StringBuffer txnURL = request.getRequestURL();
             txnURL.append("/" + txnId1.toString());
-            ActiveTransactionRegistry.INSTANCE.register(txn);
+            ActiveTransactionRegistry2.INSTANCE.register(txn);
             allGood = true;
             return;
         } catch (RepositoryException | InterruptedException | ExecutionException e) {
@@ -197,7 +197,7 @@ public class TransactionController {
 //        model.put(ExportStatementsView.FACTORY_KEY, rdfWriterFactory);
     }
 
-    private void getSize(RepositoryConnection conn, String txnId, HttpServletRequest request) throws WebApplicationException, ClientHTTPException {
+    private void getSize(RepositoryConnection conn, String transactionId, HttpServletRequest request) throws WebApplicationException, ClientHTTPException {
         try {
             ProtocolUtil.logRequestParameters(request);
 
@@ -221,11 +221,11 @@ public class TransactionController {
               //   model.put(SimpleResponseView.CONTENT_KEY, String.valueOf(size));
             }
         } finally {
-            ActiveTransactionRegistry.INSTANCE.returnTransactionConnection(txnId);
+            ActiveTransactionRegistry.INSTANCE.returnTransactionConnection(transactionId);
         }
     }
 
-    private void processQuery(RepositoryConnection conn, String txnId, HttpServletRequest request, HttpServletResponse response) throws IOException, WebApplicationException, ClientHTTPException {
+    private void processQuery(RepositoryConnection conn, String txnId, HttpServletRequest request, HttpServletResponse response) throws IOException, WebApplicationException, ClientHTTPException, RepositoryException, InterruptedException {
         String queryStr = null;
         final String contentType = request.getContentType();
         if (contentType != null && contentType.contains(Protocol.SPARQL_QUERY_MIME_TYPE)) {
@@ -251,7 +251,7 @@ public class TransactionController {
             }
         } catch (QueryInterruptedException e) {
             logger.info("Query interrupted", e);
-            ActiveTransactionRegistry.INSTANCE.returnTransactionConnection(txnId);
+            ActiveTransactionRegistry.INSTANCE.getTransactionConnection(txnId);
             throw new WebApplicationException("Query evaluation took too long", Response.Status.SERVICE_UNAVAILABLE);
         } catch (QueryEvaluationException e) {
             logger.info("Query evaluation error", e);
