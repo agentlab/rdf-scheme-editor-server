@@ -57,7 +57,11 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport {
     @Test
     public void postStatementsShouldWorkOk() throws IOException {
 
-        // post statement to repository
+        System.out.println("Statement POST Test ***********************");
+        /**
+         *  TEST :Post statement to repository
+         **********************************
+         */
         WebClient client = WebClient.create(address);
         client.type(dataFormat.getDefaultMIMEType());
         client.accept(MediaType.WILDCARD);
@@ -71,8 +75,11 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport {
 
         assertThat("repositoryCon.size", repositoryCon.size(), equalTo(4L));
 
-
-        // get statements and check our statement is Subset of got statements
+        System.out.println("Statement Subset Test ***********************");
+        /**
+         * / TEST checks is our post statement Subset of Statements at the server
+         * *********************************************
+         */
         WebClient client2 = WebClient.create(address);
         client2.type(dataFormat.getDefaultMIMEType());
         client2.accept(MediaType.WILDCARD);
@@ -93,5 +100,39 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport {
         System.out.println("OurFileIsSubset: " + isSubset(modelFromFile, modelFromServer));
 
         client2.close();
+
+
+        System.out.println("Statement Delete Test ***********************");
+        /**
+         * **************************
+        Here begins (all) Statements delete tests
+         *****************************
+         **/
+        //webClient Delete all
+        WebClient clientDeleter = WebClient.create(address);
+        clientDeleter.type(dataFormat.getDefaultMIMEType());
+        clientDeleter.accept(MediaType.WILDCARD);
+        Response responseForDelete = clientDeleter.delete();
+
+        assertEquals(204, responseForDelete.getStatus());
+        clientDeleter.close();
+
+        //Client check for deleting status
+
+        WebClient clientChecker = WebClient.create(address);
+        clientChecker.type(dataFormat.getDefaultMIMEType());
+        clientChecker.accept(MediaType.WILDCARD);
+        Response responseDeleteCheck = clientChecker.get();
+
+
+        boolean isEmptyRep = responseDeleteCheck.readEntity(String.class).isEmpty();
+        assertTrue(isEmptyRep);
+        System.out.println("String after delete " + responseDeleteCheck.readEntity(String.class));
+        System.out.println("Out Reppository is empty: " + isEmptyRep);
+
+        clientChecker.close();
+
+
+
     }
 }
