@@ -1,18 +1,42 @@
 package ru.agentlab.rdf4j.jaxrs.repository.transaction;
 
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static org.eclipse.rdf4j.http.protocol.Protocol.BINDING_PREFIX;
+import static org.eclipse.rdf4j.http.protocol.Protocol.CONTEXT_PARAM_NAME;
+import static org.eclipse.rdf4j.http.protocol.Protocol.DEFAULT_GRAPH_PARAM_NAME;
+import static org.eclipse.rdf4j.http.protocol.Protocol.INCLUDE_INFERRED_PARAM_NAME;
+import static org.eclipse.rdf4j.http.protocol.Protocol.NAMED_GRAPH_PARAM_NAME;
+import static org.eclipse.rdf4j.http.protocol.Protocol.OBJECT_PARAM_NAME;
+import static org.eclipse.rdf4j.http.protocol.Protocol.PREDICATE_PARAM_NAME;
+import static org.eclipse.rdf4j.http.protocol.Protocol.QUERY_LANGUAGE_PARAM_NAME;
+import static org.eclipse.rdf4j.http.protocol.Protocol.QUERY_PARAM_NAME;
+import static org.eclipse.rdf4j.http.protocol.Protocol.SUBJECT_PARAM_NAME;
+import static org.eclipse.rdf4j.http.protocol.Protocol.Action.QUERY;
+
+import java.io.IOException;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
+
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.IsolationLevel;
 import org.eclipse.rdf4j.IsolationLevels;
 import org.eclipse.rdf4j.http.protocol.Protocol;
-import org.eclipse.rdf4j.http.protocol.Protocol.*;
+import org.eclipse.rdf4j.http.protocol.Protocol.Action;
 import org.eclipse.rdf4j.http.protocol.error.ErrorInfo;
 import org.eclipse.rdf4j.http.protocol.error.ErrorType;
-
-import ru.agentlab.rdf4j.jaxrs.ClientHTTPException;
-import ru.agentlab.rdf4j.jaxrs.HTTPException;
-import ru.agentlab.rdf4j.jaxrs.ProtocolUtil;
-import ru.agentlab.rdf4j.jaxrs.repository.RepositoryInterceptor;
-
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
@@ -31,10 +55,8 @@ import org.eclipse.rdf4j.query.impl.SimpleDataset;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
-import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.RDFWriterFactory;
 import org.eclipse.rdf4j.rio.RDFWriterRegistry;
-import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
@@ -42,29 +64,13 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ru.agentlab.rdf4j.jaxrs.ClientHTTPException;
+import ru.agentlab.rdf4j.jaxrs.HTTPException;
+import ru.agentlab.rdf4j.jaxrs.ProtocolUtil;
+import ru.agentlab.rdf4j.jaxrs.repository.RepositoryInterceptor;
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-
-import static org.eclipse.rdf4j.http.protocol.Protocol.*;
-import static org.eclipse.rdf4j.http.protocol.Protocol.Action.QUERY;
-
-import java.io.IOException;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-
-@Component(service = TransactionController.class, property = { "osgi.jaxrs.resource=true" })
+@Component(service = TransactionController.class, property = {"osgi.jaxrs.resource=true"})
 @Path("/rdf4j-server")
 public class TransactionController {
     private static final Logger logger = LoggerFactory.getLogger(TransactionController.class);
@@ -83,17 +89,24 @@ public class TransactionController {
     @POST
     @Path("/repositories/{repId}/transactions")
     public void handleRequestInternal(@Context HttpServletRequest request, @Context HttpServletResponse response, 
-                                      @PathParam("repId") String repId, String transactionId) throws Exception {
+                                      @PathParam("repId") String repId) throws Exception {
         logger.info("POST transaction start");
-        Repository repository = RepositoryInterceptor.getRepository(request);       
-            startTransaction(repository, request);
-            logger.info("transaction started");
-            response.setHeader("Location", "/rdf4j-server/repositories/" + repId + "/transactions/" + transactionId);
+        Repository repository = repositoryManager.getRepository(repId);
+        if(repository == null)
+            throw new WebApplicationException("Repository with id=" + repId + " not found", NOT_FOUND);
+        System.out.print(repository);
+        UUID txnId = startTransaction(repository, request);
+        if(txnId == null)
+            throw new WebApplicationException("Transaction start error for repository with id=" + repId, NOT_FOUND);
+        logger.info("transaction started");
+        
+        final StringBuffer txnURL = request.getRequestURL();
+        txnURL.append("/rdf4j-server/repositories/" + repId + "/transactions/" + txnId.toString());
+        response.setHeader("Location", txnURL.toString());
     }
-    private void startTransaction(Repository repository, HttpServletRequest request)
-            throws WebApplicationException
-    {  
+    private UUID startTransaction(Repository repository, HttpServletRequest request)  throws WebApplicationException {  
         ProtocolUtil.logRequestParameters(request);
+        //Map<String, Object> model = new HashMap<String, Object>();
         IsolationLevel isolationLevel = null;
         final String isolationLevelString = request.getParameter(Protocol.ISOLATION_LEVEL_PARAM_NAME);
         if (isolationLevelString != null) {
@@ -105,29 +118,36 @@ public class TransactionController {
                 }
             }
         }
+        
         Transaction txn = null;
+        UUID txnId = null;
         boolean allGood = false;
         try {
             txn = new Transaction(repository);
+            System.out.print(txn);
             txn.begin(isolationLevel);
-            UUID txnId1 = txn.getID();            
-            final StringBuffer txnURL = request.getRequestURL();
-            txnURL.append("/" + txnId1.toString());
+
+            txnId = txn.getID();
+            System.out.print(txnId);
+            
             ActiveTransactionRegistry2.INSTANCE.register(txn);
+            System.out.print(txn);
             allGood = true;
-            return;
         } catch (RepositoryException | InterruptedException | ExecutionException e) {
             throw new WebApplicationException("Transaction start error: " + e.getMessage(), e);
         } finally {
             if (!allGood) {
                 try {
                     txn.close();
+                    System.out.print(txn);
                 } catch (InterruptedException | ExecutionException e) {
                     throw new WebApplicationException("Transaction start error: " + e.getMessage(), e);
                 }
             }
         }
+        return txnId;
     }
+
     @PUT
     @Path("/repositories/{repId}/transactions/{txnId}")
     public void updateTransaction(@Context HttpServletRequest request, @Context HttpServletResponse response, @PathParam("repId") String repId, @PathParam("txnId") String transactionId) throws Exception {
