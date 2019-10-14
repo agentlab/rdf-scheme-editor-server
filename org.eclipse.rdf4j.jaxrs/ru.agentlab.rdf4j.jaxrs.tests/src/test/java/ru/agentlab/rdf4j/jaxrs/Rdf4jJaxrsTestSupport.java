@@ -12,8 +12,6 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.logLevel;
 
 import java.io.File;
 
-import javax.inject.Inject;
-
 import org.apache.karaf.itests.KarafTestSupport;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
@@ -23,11 +21,7 @@ import org.ops4j.pax.exam.karaf.options.LogLevelOption;
 import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 import org.osgi.framework.Constants;
 
-import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
-
 public class Rdf4jJaxrsTestSupport extends KarafTestSupport {
-    @Inject
-    protected RepositoryManagerComponent manager;
 
     @Override
     @Configuration
@@ -44,19 +38,25 @@ public class Rdf4jJaxrsTestSupport extends KarafTestSupport {
         }
 
         return new Option[] {
-                // enable for remote debugging
+                // uncomment if you need to debug (blocks test execution and waits for the debugger)
                 // KarafDistributionOption.debugConfiguration("8889", true),
                 karafDistributionConfiguration().frameworkUrl(karafUrl).name("Apache Karaf").unpackDirectory(new File("target/exam")),
                 // enable JMX RBAC security, thanks to the KarafMBeanServerBuilder
                 configureSecurity().disableKarafMBeanServerBuilder(),
                 // configureConsole().ignoreLocalConsole(),
-                keepRuntimeFolder(), logLevel(LogLevelOption.LogLevel.INFO), mavenBundle().groupId("org.awaitility").artifactId("awaitility").versionAsInProject(),
+                keepRuntimeFolder(),
+                logLevel(LogLevelOption.LogLevel.INFO),
+                mavenBundle().groupId("org.awaitility").artifactId("awaitility").versionAsInProject(),
                 mavenBundle().groupId("org.apache.servicemix.bundles").artifactId("org.apache.servicemix.bundles.hamcrest").versionAsInProject(), mavenBundle().groupId("org.apache.karaf.itests").artifactId("common").versionAsInProject(),
                 features(maven().groupId("ru.agentlab.rdf4j").artifactId("ru.agentlab.rdf4j.features").type("xml").version("0.0.1-SNAPSHOT"), "ru.agentlab.rdf4j.jaxrs"),
                 // mavenBundle().groupId("org.mockito").artifactId("mockito-core").version("2.23.4"),
-                junitBundles(), editConfigurationFilePut("etc/org.apache.felix.http.cfg", "org.osgi.service.http.port", httpPort), editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiRegistryPort", rmiRegistryPort),
-                editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiServerPort", rmiServerPort), editConfigurationFilePut("etc/org.apache.karaf.shell.cfg", "sshPort", sshPort),
-                editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg", "org.ops4j.pax.url.mvn.localRepository", localRepository) };
+                junitBundles(),
+                editConfigurationFilePut("etc/org.apache.felix.http.cfg", "org.osgi.service.http.port", httpPort),
+                editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiRegistryPort", rmiRegistryPort),
+                editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiServerPort", rmiServerPort),
+                editConfigurationFilePut("etc/org.apache.karaf.shell.cfg", "sshPort", sshPort),
+                editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg", "org.ops4j.pax.url.mvn.localRepository", localRepository)
+          };
     }
 
     @ProbeBuilder
