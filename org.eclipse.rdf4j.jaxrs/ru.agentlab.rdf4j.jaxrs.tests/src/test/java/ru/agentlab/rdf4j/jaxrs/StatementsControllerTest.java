@@ -45,7 +45,7 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport {
     public void init() throws Exception {
         ENDPOINT_ADDRESS = "http://localhost:" + getHttpPort() + "/rdf4j-server/repositories/";
         address = ENDPOINT_ADDRESS + repId + "/statements";
-        repository = manager.getOrCreateRepository(repId, "memory", null);
+        repository = manager.getOrCreateRepository(repId, "native-rdfs", null);
         repositoryCon = repository.getConnection();
     }
 
@@ -54,83 +54,88 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport {
         repositoryCon.close();
     }
 
-    @Test
-    public void postStatementsShouldWorkOk() throws IOException {
-
-        System.out.println("Statement POST Test ***********************");
-        /**
-         *  TEST :Post statement to repository
-         **********************************
-         */
+    public WebClient webClientCreator(){
         WebClient client = WebClient.create(address);
         client.type(dataFormat.getDefaultMIMEType());
         client.accept(MediaType.WILDCARD);
+
+        return client;
+    }
+
+    public Model getAllStatemnts(){
+        WebClient client2 = webClientCreator();
+        Response response2 = client2.get();
+        String gotString = response2.readEntity(String.class);
+
+        assertEquals(200, response2.getStatus());
+        Reader reader = new StringReader(gotString);
+        Model modelFromServer = null;
+        try {
+            modelFromServer = Rio.parse(reader,"", RDFFormat.TURTLE);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        client2.close();
+
+        return modelFromServer;
+
+    }
+
+    public void postStatement(){
+        WebClient client = webClientCreator();
         InputStream dataStream = RepositoryControllerTest.class.getResourceAsStream(file);
         assertNotNull(dataStream);
-        assertThat("dataStream.available", dataStream.available(), greaterThan(0));
+        try {
+            assertThat("dataStream.available", dataStream.available(), greaterThan(0));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         Response response = client.post(dataStream);
         assertEquals(204, response.getStatus());
         assertEquals("", response.readEntity(String.class));
         client.close();
 
         assertThat("repositoryCon.size", repositoryCon.size(), equalTo(4L));
+    }
 
-        System.out.println("Statement Subset Test ***********************");
-        /**
-         * / TEST checks is our post statement Subset of Statements at the server
-         * *********************************************
-         */
-        WebClient client2 = WebClient.create(address);
-        client2.type(dataFormat.getDefaultMIMEType());
-        client2.accept(MediaType.WILDCARD);
-        Response response2 = client2.get();
+    public void isSatementSubset(){
 
         InputStream dataStream2 = RepositoryControllerTest.class.getResourceAsStream(file);
-        Model modelFromFile = Rio.parse(dataStream2,"",RDFFormat.TURTLE);
+        Model modelFromFile = null;
+        try {
+            modelFromFile = Rio.parse(dataStream2,"", RDFFormat.TURTLE);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-        String gotString = response2.readEntity(String.class);
-        assertEquals(200, response2.getStatus());
-        System.out.println("Response.getStatus():" + response2.getStatus());
-
-        Reader reader = new StringReader(gotString);
-        Model modelFromServer = Rio.parse(reader,"", RDFFormat.TURTLE);
-
-        //isSubset
+        Model modelFromServer = getAllStatemnts();
         assertTrue(isSubset(modelFromFile,modelFromServer));
-        System.out.println("OurFileIsSubset: " + isSubset(modelFromFile, modelFromServer));
+    }
 
-        client2.close();
-
-
-        System.out.println("Statement Delete Test ***********************");
-        /**
-         * **************************
-        Here begins (all) Statements delete tests
-         *****************************
-         **/
-        //webClient Delete all
-        WebClient clientDeleter = WebClient.create(address);
-        clientDeleter.type(dataFormat.getDefaultMIMEType());
-        clientDeleter.accept(MediaType.WILDCARD);
+    public void deletAllStatements(Model modelBeforeDelete){
+        WebClient clientDeleter = webClientCreator();
         Response responseForDelete = clientDeleter.delete();
 
         assertEquals(204, responseForDelete.getStatus());
         clientDeleter.close();
 
-        //Client check for deleting status
+        Model modelAfterDelete = getAllStatemnts();
 
-        WebClient clientChecker = WebClient.create(address);
-        clientChecker.type(dataFormat.getDefaultMIMEType());
-        clientChecker.accept(MediaType.WILDCARD);
-        Response responseDeleteCheck = clientChecker.get();
+        assertEquals(modelAfterDelete,modelBeforeDelete);
 
 
-        boolean isEmptyRep = responseDeleteCheck.readEntity(String.class).isEmpty();
-        assertTrue(isEmptyRep);
-        System.out.println("String after delete " + responseDeleteCheck.readEntity(String.class));
-        System.out.println("Out Reppository is empty: " + isEmptyRep);
+    }
 
-        clientChecker.close();
+    @Test
+    public void postStatementsShouldWorkOk() throws IOException {
+        Model modelBeforeDelete = getAllStatemnts();
+
+        postStatement();
+
+        isSatementSubset();
+
+        deletAllStatements(modelBeforeDelete);
+
 
 
 
