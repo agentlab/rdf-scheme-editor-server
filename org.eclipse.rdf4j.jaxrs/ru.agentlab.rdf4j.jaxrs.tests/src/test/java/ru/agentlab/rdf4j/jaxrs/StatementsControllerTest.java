@@ -45,7 +45,7 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport {
 
     @Before
     public void init() throws Exception {
-        DELETE_ADDRESS = "?subj=%3Curn:x-local:graph1%3E&pred=dc:publisher&obj=Bob";
+        DELETE_ADDRESS = "?subj=%3Curn:x-local:graph1%3E&pred=<http://purl.org/dc/elements/1.1/publisher>&obj=\"Bob\"";
         ENDPOINT_ADDRESS = "http://localhost:" + getHttpPort() + "/rdf4j-server/repositories/";
         address = ENDPOINT_ADDRESS + repId + "/statements";
 
@@ -70,7 +70,7 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport {
         WebClient client2 = webClientCreator(address);
         Response response2 = client2.get();
         String gotString = response2.readEntity(String.class);
-        System.out.println("afterdelete: " + gotString);
+        
         assertEquals(200, response2.getStatus());
         Reader reader = new StringReader(gotString);
         Model modelFromServer = null;
@@ -140,19 +140,14 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport {
                 "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n" +
                 "\n" +
                 "<urn:x-local:graph1> dc:publisher \"Bob\" .";
-        String deleteAddress = address + DELETE_ADDRESS;
-
-        System.out.println("address: " + deleteAddress);
+        String deleteAddress =  address + DELETE_ADDRESS;
 
         WebClient client = webClientCreator(deleteAddress);
         Response responseDeleteTriple = client.delete();
-        System.out.println("deletestatus: " + responseDeleteTriple.getStatus());
-        assertEquals(204, responseDeleteTriple.getStatus());
 
         client.close();
-        System.out.println("here the point: \n");
-        Model modelAfterDelete = getAllStatemnts();
 
+        Model modelAfterDelete = getAllStatemnts();
         Reader reader = new StringReader(triple);
         Model modelTriple = null;
         try {
@@ -161,10 +156,7 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport {
             e.printStackTrace();
         }
 
-//        assertFalse(isSubset(modelTriple, modelAfterDelete));
-
-
-
+        assertFalse(isSubset(modelTriple, modelAfterDelete));
 
     }
 
