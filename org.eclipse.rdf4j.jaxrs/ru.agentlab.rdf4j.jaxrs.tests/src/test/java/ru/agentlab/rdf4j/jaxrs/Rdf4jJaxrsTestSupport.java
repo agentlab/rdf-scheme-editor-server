@@ -69,7 +69,7 @@ public class Rdf4jJaxrsTestSupport extends KarafTestSupport {
     }
 
     @Override
-    public String getHttpPort() throws Exception {
+    public String   getHttpPort() throws Exception {
         org.osgi.service.cm.Configuration configuration = configurationAdmin.getConfiguration("org.apache.felix.http", null);
         if (configuration != null) {
             return configuration.getProperties().get("org.osgi.service.http.port").toString();
