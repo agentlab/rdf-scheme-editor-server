@@ -1,47 +1,57 @@
 package ru.agentlab.rdf4j.jaxrs;
 
 import static org.eclipse.rdf4j.model.util.Models.isSubset;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringReader;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import aQute.bnd.header.Parameters;
 import org.apache.cxf.jaxrs.client.WebClient;
-import org.apache.karaf.itests.KarafTestSupport;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
-import org.hibernate.annotations.Parameter;
-import org.hibernate.annotations.ValueGenerationType;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.ops4j.pax.exam.junit.PaxExam;
+import org.junit.runners.Parameterized.Parameters;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.Option;
+import org.ops4j.pax.exam.ProbeBuilder;
+import org.ops4j.pax.exam.TestProbeBuilder;
 import org.ops4j.pax.exam.junit.PaxExamParameterized;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 
+import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
+
 
 @RunWith(PaxExamParameterized.class)
-//@ExamReactorStrategy(PerClass.class)
-public class StatementsControllerTest extends Rdf4jJaxrsTestSupport {
+@ExamReactorStrategy(PerClass.class)
+public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
+    @Inject
+    protected RepositoryManagerComponent manager;
+    
     String ENDPOINT_ADDRESS;
     String DELETE_ADDRESS;
     String address;
-    private String testType;
-
 
     String file = "/testcases/default-graph-1.ttl";
     RDFFormat dataFormat = Rio.getParserFormatForFileName(file).orElse(RDFFormat.RDFXML);
@@ -49,13 +59,29 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport {
     String repId = "id1237";
     Repository repository;
     RepositoryConnection repositoryCon;
+    
+    private String testType;
 
-
-    public void StatementsControllerTest(String typeTest){
+    @Configuration
+    public static Option[] config2() {
+        return config();
+    }
+    
+    @ProbeBuilder
+    public static TestProbeBuilder probeConfiguration2(TestProbeBuilder probe) {
+        return probeConfiguration(probe);
+    }
+    
+    public StatementsControllerTest(String typeTest){
         this.testType = typeTest;
     }
-
-
+    
+    @Parameters
+    public static List<Object[]> data(){
+        return Arrays.asList(new Object[][] {
+            {"memory"}, {"native"}, {"native-rdfs"}
+        });
+    }
 
     @Before
     public void init() throws Exception {
@@ -66,17 +92,9 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport {
         repositoryCon = repository.getConnection();
     }
 
-
     @After
     public void cleanup() {
         repositoryCon.close();
-    }
-
-    @Parameterized.Parameters
-    public static Collection data(){
-        return Arrays.asList(new Object[] [] {
-                {"memory"}, {"native"}, {"native-rdfs"}
-        });
     }
 
     public WebClient webClientCreator(String myAddress){
@@ -171,5 +189,9 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport {
         isSatementSubset();
         deletAllStatements(modelBeforeDelete);
         deleteOneStatement();
+        //assertThat(a+b, is(sum));
+        System.out.println("TTTTTest!!!!!!!!!!!!!");
+        assertThat(testType, notNullValue());
+        System.out.println("testType=" + testType);
     }
 }
