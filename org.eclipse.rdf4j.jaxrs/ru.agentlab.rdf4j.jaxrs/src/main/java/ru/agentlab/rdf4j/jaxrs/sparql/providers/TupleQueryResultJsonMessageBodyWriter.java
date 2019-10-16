@@ -48,9 +48,9 @@ public class TupleQueryResultJsonMessageBodyWriter implements MessageBodyWriter<
 	@Context
 	Request request;
 	
-	public TupleQueryResultJsonMessageBodyWriter() {
-		System.out.println("Init " + this.getClass().getSimpleName());
-	}
+	//public TupleQueryResultJsonMessageBodyWriter() {
+	//	System.out.println("Init " + this.getClass().getSimpleName());
+	//}
 
 	@Override
 	public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations,

@@ -15,6 +15,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
@@ -44,6 +45,10 @@ import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
 
 
+/**
+ * Тесты для Statements API с Context-Type = turtle
+ *
+ */
 @RunWith(PaxExamParameterized.class)
 @ExamReactorStrategy(PerClass.class)
 public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
@@ -51,15 +56,16 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
     protected RepositoryManagerComponent manager;
 
     String ENDPOINT_ADDRESS;
-    String DELETE_ADDRESS;
+    String DELETE_ADDRESS = "?subj=%3Curn:x-local:graph1%3E&pred=<http://purl.org/dc/elements/1.1/publisher>&obj=\"Bob\"";
     String address;
 
     String file = "/testcases/default-graph-1.ttl";
     RDFFormat dataFormat = Rio.getParserFormatForFileName(file).orElse(RDFFormat.RDFXML);
 
-    String repId = "id1237";
+    String repId;
     Repository repository;
     RepositoryConnection repositoryCon;
+    Model modelBeforeDelete;
 
     private String testType;
 
@@ -84,13 +90,15 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
         });
     }
 
-
     @Before
     public void init() throws Exception {
-        System.out.println("BEEEEEEEEEEEEEEEEEEEEFOOOOOOOOOOOOOOREEEEEEEEEEEEEEE");
-        DELETE_ADDRESS = "?subj=%3Curn:x-local:graph1%3E&pred=<http://purl.org/dc/elements/1.1/publisher>&obj=\"Bob\"";
+        UUID uuid = UUID.randomUUID();
+        repId = uuid.toString();
+        System.out.println("repId=" + repId);
+        
         ENDPOINT_ADDRESS = "http://localhost:" + getHttpPort() + "/rdf4j-server/repositories/";
         address = ENDPOINT_ADDRESS + repId + "/statements";
+        
         repository = manager.getOrCreateRepository(repId, testType, null);
         repositoryCon = repository.getConnection();
     }
@@ -111,7 +119,6 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
         WebClient client2 = webClientCreator(address);
         Response response2 = client2.get();
         String gotString = response2.readEntity(String.class);
-        System.out.println(gotString);
         assertEquals(200, response2.getStatus());
         Reader reader = new StringReader(gotString);
         Model modelFromServer = null;
@@ -153,17 +160,16 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
         assertTrue(isSubset(modelFromFile,modelFromServer));
     }
 
-    public void deletAllStatements(Model modelBeforeDelete){
+    public void deletAllStatements(){
         WebClient clientDeleter = webClientCreator(address);
         Response responseForDelete = clientDeleter.delete();
         assertEquals(204, responseForDelete.getStatus());
         clientDeleter.close();
         Model modelAfterDelete = getAllStatemnts();
-        assertEquals(modelAfterDelete,modelBeforeDelete);
+        assertEquals(modelAfterDelete, modelBeforeDelete);
     }
 
     public void deleteOneStatement(){
-        postStatement();
         String triple = "# Default graph\n" +
                 "@prefix dc: <http://purl.org/dc/elements/1.1/> .\n" +
                 "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n" +
@@ -171,30 +177,51 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
                 "<urn:x-local:graph1> dc:publisher \"Bob\" .";
         String deleteAddress =  address + DELETE_ADDRESS;
         WebClient client = webClientCreator(deleteAddress);
-        Response responseDeleteTriple = client.delete();
+        Response response = client.delete();
+        assertEquals(204, response.getStatus());
         client.close();
 
         Model modelAfterDelete = getAllStatemnts();
         Reader reader = new StringReader(triple);
         Model modelTriple = null;
         try {
-            modelTriple = Rio.parse(reader,"",RDFFormat.TURTLE);
+            modelTriple = Rio.parse(reader, "", RDFFormat.TURTLE);
         } catch (IOException e) {
             e.printStackTrace();
         }
         assertFalse(isSubset(modelTriple, modelAfterDelete));
     }
 
+    /**
+     * Все данные из POST запроса попадают в репозиторий
+     */
     @Test
-    public void postStatementsShouldWorkOk() throws IOException {
-        Model modelBeforeDelete = getAllStatemnts();
+    public void postStatementsShouldWorkOk() {
+        modelBeforeDelete = getAllStatemnts();
+        //TODO sdfsdfdsf
+        assertTrue(true);
+    }
+    
+    @Test
+    public void deleteAllStatementsShouldWorkOk() throws IOException {
+        modelBeforeDelete = getAllStatemnts();
         postStatement();
         isSatementSubset();
-        System.out.println("HEere you are");
-        deletAllStatements(modelBeforeDelete);
-        System.out.println("**************************");
-        deleteOneStatement();
-        System.out.println("TTTTTest!!!!!!!!!!!!!");
-        System.out.println("testType=" + testType);
+        deletAllStatements();
     }
+    
+    @Test
+    public void deleteOneStatementShouldWorkOk() throws IOException {
+        modelBeforeDelete = getAllStatemnts();
+        postStatement();
+        deleteOneStatement();
+    }
+    
+    /**
+     * POST, PUT, DELETE на несуществующий репозиторий
+     * DELETE несуществующих триплов в графе (дефолтовом или именованном) из параметра context
+     * DELETE существующих триплов (одного или всех) в графе (дефолтовом или именованном) из параметра context
+     * POST пары триплов перезаписывает существующие 2 трипла в графе (дефолтовом или именованном) из параметра context
+     * PUT пары триплов очищает граф (дефолтовом или именованном) из параметра context
+     */
 }

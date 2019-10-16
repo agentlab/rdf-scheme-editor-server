@@ -154,7 +154,7 @@ public class Rdf4jJaxrsTestSupport2 {
 
     
     public static TestProbeBuilder probeConfiguration(TestProbeBuilder probe) {
-        System.out.println("TestProbeBuilder gets called");
+        //System.out.println("TestProbeBuilder gets called");
         // probe.setHeader(Constants.DYNAMICIMPORT_PACKAGE,
         // "*,org.apache.felix.service.*;status=provisional");
         probe.setHeader(Constants.IMPORT_PACKAGE, "org.eclipse.rdf4j.query.algebra.evaluation.impl,org.apache.cxf.jaxrs.client");
@@ -200,9 +200,10 @@ public class Rdf4jJaxrsTestSupport2 {
     public static int getAvailablePort(int min, int max) {
         for (int i = min; i <= max; i++) {
             try (ServerSocket socket = new ServerSocket(i)) {
+                System.out.println("Using port: " + i);
                 return socket.getLocalPort();
             } catch (Exception e) {
-                System.err.println("Port " + i + " not available, trying next one");
+                //System.err.println("Port " + i + " not available, trying next one");
                 continue; // try next port
             }
         }

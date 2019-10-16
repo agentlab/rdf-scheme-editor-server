@@ -11,6 +11,7 @@ import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.keepRunti
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.logLevel;
 
 import java.io.File;
+import java.net.ServerSocket;
 
 import javax.inject.Inject;
 
@@ -75,5 +76,18 @@ public class Rdf4jJaxrsTestSupport extends KarafTestSupport {
             return configuration.getProperties().get("org.osgi.service.http.port").toString();
         }
         return "8181";
+    }
+    
+    public static int getAvailablePort(int min, int max) {
+        for (int i = min; i <= max; i++) {
+            try (ServerSocket socket = new ServerSocket(i)) {
+                System.out.println("Using port: " + i);
+                return socket.getLocalPort();
+            } catch (Exception e) {
+                //System.err.println("Port " + i + " not available, trying next one");
+                continue; // try next port
+            }
+        }
+        throw new IllegalStateException("Can't find available network ports");
     }
 }
