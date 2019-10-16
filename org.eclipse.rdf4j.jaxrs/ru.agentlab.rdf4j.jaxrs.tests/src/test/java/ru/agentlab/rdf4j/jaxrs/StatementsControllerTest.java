@@ -1,7 +1,6 @@
 package ru.agentlab.rdf4j.jaxrs;
 
 import static org.eclipse.rdf4j.model.util.Models.isSubset;
-import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
@@ -36,6 +35,7 @@ import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
+import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.junit.PaxExamParameterized;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
@@ -43,12 +43,13 @@ import org.ops4j.pax.exam.spi.reactors.PerClass;
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
 
+
 @RunWith(PaxExamParameterized.class)
 @ExamReactorStrategy(PerClass.class)
 public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
     @Inject
     protected RepositoryManagerComponent manager;
-    
+
     String ENDPOINT_ADDRESS;
     String DELETE_ADDRESS;
     String address;
@@ -59,36 +60,38 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
     String repId = "id1237";
     Repository repository;
     RepositoryConnection repositoryCon;
-    
+
     private String testType;
 
     @Configuration
     public static Option[] config2() {
         return config();
     }
-    
+
     @ProbeBuilder
     public static TestProbeBuilder probeConfiguration2(TestProbeBuilder probe) {
         return probeConfiguration(probe);
     }
-    
+
     public StatementsControllerTest(String typeTest){
         this.testType = typeTest;
     }
-    
+
     @Parameters
-    public static List<Object[]> data(){
-        return Arrays.asList(new Object[][] {
-            {"memory"}, {"native"}, {"native-rdfs"}
+    public static List<String[]> data(){
+        return Arrays.asList(new String[][] {
+                {"memory"}, {"native"}, {"native-rdfs"}
         });
     }
 
+
     @Before
     public void init() throws Exception {
+        System.out.println("BEEEEEEEEEEEEEEEEEEEEFOOOOOOOOOOOOOOREEEEEEEEEEEEEEE");
         DELETE_ADDRESS = "?subj=%3Curn:x-local:graph1%3E&pred=<http://purl.org/dc/elements/1.1/publisher>&obj=\"Bob\"";
         ENDPOINT_ADDRESS = "http://localhost:" + getHttpPort() + "/rdf4j-server/repositories/";
         address = ENDPOINT_ADDRESS + repId + "/statements";
-        repository = manager.getOrCreateRepository(repId, "memory", null);
+        repository = manager.getOrCreateRepository(repId, testType, null);
         repositoryCon = repository.getConnection();
     }
 
@@ -108,6 +111,7 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
         WebClient client2 = webClientCreator(address);
         Response response2 = client2.get();
         String gotString = response2.readEntity(String.class);
+        System.out.println(gotString);
         assertEquals(200, response2.getStatus());
         Reader reader = new StringReader(gotString);
         Model modelFromServer = null;
@@ -160,7 +164,6 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
 
     public void deleteOneStatement(){
         postStatement();
-
         String triple = "# Default graph\n" +
                 "@prefix dc: <http://purl.org/dc/elements/1.1/> .\n" +
                 "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n" +
@@ -175,7 +178,7 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
         Reader reader = new StringReader(triple);
         Model modelTriple = null;
         try {
-             modelTriple = Rio.parse(reader,"",RDFFormat.TURTLE);
+            modelTriple = Rio.parse(reader,"",RDFFormat.TURTLE);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -187,11 +190,11 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
         Model modelBeforeDelete = getAllStatemnts();
         postStatement();
         isSatementSubset();
+        System.out.println("HEere you are");
         deletAllStatements(modelBeforeDelete);
+        System.out.println("**************************");
         deleteOneStatement();
-        //assertThat(a+b, is(sum));
         System.out.println("TTTTTest!!!!!!!!!!!!!");
-        assertThat(testType, notNullValue());
         System.out.println("testType=" + testType);
     }
 }
