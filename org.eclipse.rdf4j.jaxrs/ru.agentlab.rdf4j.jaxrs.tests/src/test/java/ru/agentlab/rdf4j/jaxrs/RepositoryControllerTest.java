@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -37,7 +38,10 @@ import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 @ExamReactorStrategy(PerClass.class)
 public class RepositoryControllerTest extends Rdf4jJaxrsTestSupport {
     String ENDPOINT_ADDRESS;
-	
+
+    @Inject
+    protected RepositoryManagerComponent manager;
+    
     @Before
     public void init() throws Exception {
         ENDPOINT_ADDRESS = "http://localhost:" + getHttpPort() + "/rdf4j-server/repositories/";

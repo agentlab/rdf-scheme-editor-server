@@ -115,7 +115,7 @@
 		<jaxb.version>2.3.0</jaxb.version>
 		<opencsv.version>4.3.2</opencsv.version>
 		
-		<cxf.version>3.2.5</cxf.version>
+		<cxf.version>3.3.2</cxf.version>
 		<aries.whiteboard.version>1.0.5</aries.whiteboard.version>
 
 		<rdf4j.server.version>3.1.0-SNAPSHOT</rdf4j.server.version>

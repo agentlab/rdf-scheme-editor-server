@@ -10,6 +10,7 @@ import static org.junit.Assert.assertNull;
 import java.io.IOException;
 import java.io.InputStream;
 
+import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -26,6 +27,8 @@ import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 
+import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
+
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
 public class GraphControllerTest extends Rdf4jJaxrsTestSupport {
@@ -37,6 +40,9 @@ public class GraphControllerTest extends Rdf4jJaxrsTestSupport {
     String repId = "id1238";
     Repository repository;
     RepositoryConnection repositoryCon;
+    
+    @Inject
+    protected RepositoryManagerComponent manager;
 
     @Before
     public void init() throws Exception {
