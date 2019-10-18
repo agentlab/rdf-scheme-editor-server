@@ -36,7 +36,6 @@ import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
-import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.junit.PaxExamParameterized;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
@@ -55,8 +54,11 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
     @Inject
     protected RepositoryManagerComponent manager;
 
+    String wrongRepAddr;
     String ENDPOINT_ADDRESS;
-    String DELETE_ADDRESS = "?subj=%3Curn:x-local:graph1%3E&pred=<http://purl.org/dc/elements/1.1/publisher>&obj=\"Bob\"";
+    String WRONG_TRIPLE_ADDRESS = "&subj=%3Curn:x-local:graph1%3E&pred=<http://purl.org/dc/elements/1.1/publisher>&obj=\"BobUS\"";
+    String TRIPLE_ADDRESS;
+    String TWO_TRIPLE_ADDRESS;
     String address;
 
     String file = "/testcases/default-graph-1.ttl";
@@ -67,7 +69,14 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
     RepositoryConnection repositoryCon;
     Model modelBeforeDelete;
 
+    private class Checker{
+        String requestAnswer;
+        boolean testCheck;
+        long longSize;
+    }
+
     private String testType;
+    private String grafContext;
 
     @Configuration
     public static Option[] config2() {
@@ -79,14 +88,19 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
         return probeConfiguration(probe);
     }
 
-    public StatementsControllerTest(String typeTest){
+    public StatementsControllerTest(String typeTest,String grafContext){
         this.testType = typeTest;
+        this.grafContext = grafContext;
     }
 
     @Parameters
     public static List<String[]> data(){
         return Arrays.asList(new String[][] {
-                {"memory"}, {"native"}, {"native-rdfs"}
+                {"memory","null"}, {"native","null"}, {"native-rdfs","null"},
+
+                {"memory","%3Cfile%3A%2F%2FC%3A%2Ffakepath%2Fdefault-graph-1.ttl%3E"},
+                {"native","%3Cfile%3A%2F%2FC%3A%2Ffakepath%2Fdefault-graph-1.ttl%3E"},
+                {"native-rdfs","%3Cfile%3A%2F%2FC%3A%2Ffakepath%2Fdefault-graph-1.ttl%3E"}
         });
     }
 
@@ -95,9 +109,11 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
         UUID uuid = UUID.randomUUID();
         repId = uuid.toString();
         System.out.println("repId=" + repId);
-        
+        TWO_TRIPLE_ADDRESS = "&obj=\"Bob\"&pred=<http://purl.org/dc/elements/1.1/publisher>";
+        TRIPLE_ADDRESS = "&subj=%3Curn:x-local:graph1%3E&pred=<http://purl.org/dc/elements/1.1/publisher>&obj=\"Bob\""   ;
         ENDPOINT_ADDRESS = "http://localhost:" + getHttpPort() + "/rdf4j-server/repositories/";
-        address = ENDPOINT_ADDRESS + repId + "/statements";
+        wrongRepAddr = ENDPOINT_ADDRESS + "id1237" + "/statements";
+        address = ENDPOINT_ADDRESS + repId + "/statements?context=" + grafContext ;
         
         repository = manager.getOrCreateRepository(repId, testType, null);
         repositoryCon = repository.getConnection();
@@ -117,6 +133,7 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
 
     public Model getAllStatemnts(){
         WebClient client2 = webClientCreator(address);
+        System.out.println("getAllStat: " + address);
         Response response2 = client2.get();
         String gotString = response2.readEntity(String.class);
         assertEquals(200, response2.getStatus());
@@ -131,8 +148,10 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
         return modelFromServer;
     }
 
-    public void postStatement(){
+    public Checker postStatement(String address){
+        Checker checker = new Checker();
         WebClient client = webClientCreator(address);
+        System.out.println("PostStatements: " + address);
         InputStream dataStream = RepositoryControllerTest.class.getResourceAsStream(file);
         assertNotNull(dataStream);
         try {
@@ -141,14 +160,13 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
             e.printStackTrace();
         }
         Response response = client.post(dataStream);
-        assertEquals(204, response.getStatus());
-        assertEquals("", response.readEntity(String.class));
+        checker.requestAnswer = ""+response.getStatus();
         client.close();
-
-        assertThat("repositoryCon.size", repositoryCon.size(), equalTo(4L));
+        checker.longSize =repositoryCon.size();
+        return checker;
     }
 
-    public void isSatementSubset(){
+    public boolean isStatementSubset(){
         InputStream dataStream2 = RepositoryControllerTest.class.getResourceAsStream(file);
         Model modelFromFile = null;
         try {
@@ -157,31 +175,39 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
             e.printStackTrace();
         }
         Model modelFromServer = getAllStatemnts();
-        assertTrue(isSubset(modelFromFile,modelFromServer));
+        return isSubset(modelFromFile,modelFromServer);
     }
 
-    public void deletAllStatements(){
+    public Checker deletAllStatements(String address){
+        Checker checker = new Checker();
         WebClient clientDeleter = webClientCreator(address);
+        System.out.println("deleteAdress: "+ address);
         Response responseForDelete = clientDeleter.delete();
-        assertEquals(204, responseForDelete.getStatus());
+        checker.requestAnswer = ""+responseForDelete.getStatus();
         clientDeleter.close();
         Model modelAfterDelete = getAllStatemnts();
-        assertEquals(modelAfterDelete, modelBeforeDelete);
+        System.out.println("after: " + modelAfterDelete);
+        System.out.println("befpre:  " + modelBeforeDelete);
+        checker.testCheck = modelAfterDelete.equals(modelBeforeDelete);
+        return checker;
     }
 
-    public void deleteOneStatement(){
+    public Checker deleteOneStatement(String deleteAddrAdd){
+        Checker checker = new Checker();
         String triple = "# Default graph\n" +
                 "@prefix dc: <http://purl.org/dc/elements/1.1/> .\n" +
                 "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n" +
                 "\n" +
                 "<urn:x-local:graph1> dc:publisher \"Bob\" .";
-        String deleteAddress =  address + DELETE_ADDRESS;
+        String deleteAddress =  address + deleteAddrAdd;
+        System.out.println("deleteAdress: " + deleteAddress);
         WebClient client = webClientCreator(deleteAddress);
         Response response = client.delete();
-        assertEquals(204, response.getStatus());
+        checker.requestAnswer = "" + response.getStatus();
         client.close();
 
         Model modelAfterDelete = getAllStatemnts();
+        System.out.println(getAllStatemnts());
         Reader reader = new StringReader(triple);
         Model modelTriple = null;
         try {
@@ -189,7 +215,32 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        assertFalse(isSubset(modelTriple, modelAfterDelete));
+        checker.testCheck = isSubset(modelTriple, modelAfterDelete);
+        return  checker;
+    }
+
+    public Checker putTwoStatemnts(String address){
+        Checker checker =new Checker();
+        String putAddress = address;
+        String putTriples = "# Default graph" +
+        "@prefix dc: <http://purl.org/dc/elements/1.1/> ." +
+        "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> ." +
+                "<urn:x-local:graph1> dc:publisher \"Bob\" ." +
+                "<urn:x-local:graph2> dc:publisher \"Bob\" .";
+        WebClient client = webClientCreator(putAddress);
+        Response response = client.put(putTriples);
+        checker.requestAnswer = "" + response.getStatus();
+
+        Model gotModel = getAllStatemnts();
+        Reader reader = new StringReader(putTriples);
+        Model twoTriples = null;
+        try {
+            twoTriples = Rio.parse(reader,"",RDFFormat.TURTLE);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        checker.testCheck = isSubset(twoTriples,gotModel);
+        return checker;
     }
 
     /**
@@ -197,31 +248,65 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
      */
     @Test
     public void postStatementsShouldWorkOk() {
-        modelBeforeDelete = getAllStatemnts();
-        //TODO sdfsdfdsf
-        assertTrue(true);
+        Checker checker;
+        checker = postStatement(address);
+        assertThat("repositoryCon.size", checker.longSize, equalTo(4L));
+        assertThat("postStatementStatus: ", checker.requestAnswer, equalTo("204"));
+
+        assertTrue(isStatementSubset());
+        checker = postStatement(wrongRepAddr);
+        assertThat("repositoryCon.size", checker.longSize, equalTo(4L)); // выводит тру даже если отправил неправильный адресс
+        assertThat("postStatementStatus: ", checker.requestAnswer, equalTo("404"));
     }
     
     @Test
     public void deleteAllStatementsShouldWorkOk() throws IOException {
         modelBeforeDelete = getAllStatemnts();
-        postStatement();
-        isSatementSubset();
-        deletAllStatements();
+        Checker checker;
+        postStatement(address);
+        checker = deletAllStatements(address);
+        assertThat("deleteAllStatements(): ", checker.requestAnswer, equalTo("204"));
+        assertThat("deleteAllStatements(): ",checker.testCheck,equalTo(true));
+
+        postStatement(wrongRepAddr);
+        checker = deletAllStatements(wrongRepAddr);
+        assertThat("deleteAllStatements(): ", checker.requestAnswer, equalTo("404"));
     }
     
     @Test
     public void deleteOneStatementShouldWorkOk() throws IOException {
+        Checker checker;
         modelBeforeDelete = getAllStatemnts();
-        postStatement();
-        deleteOneStatement();
+        System.out.println("adrrpost" + address);
+        postStatement(address);
+        checker =deleteOneStatement(TRIPLE_ADDRESS);
+        assertThat("deleteOneStatements() Status: ", checker.requestAnswer, equalTo("204"));
+        assertThat("deleteOneStatements(): ", checker.testCheck ,equalTo(false));
+        
+        deletAllStatements(address);
+        postStatement(address);
+        checker = deleteOneStatement(WRONG_TRIPLE_ADDRESS);
+        assertThat("deleteOneStatements() wrong address Status: ", checker.requestAnswer, equalTo("204"));
+        assertThat("deleteOneStatements() wrong address : ", isStatementSubset(),equalTo(true));
     }
-    
+
+    @Test
+    public void putStatementsShouldWorkOk() throws IOException{
+        Checker checker;
+        postStatement(address);
+        checker = putTwoStatemnts(address);
+        assertThat("Put Exists two triples: ", checker.testCheck, equalTo(true));
+        assertThat("Put Exists two triples Status: ",checker.requestAnswer, equalTo("204"));
+
+        checker = putTwoStatemnts(wrongRepAddr);
+        assertThat("Put Exists two triples Status: ",checker.requestAnswer, equalTo("404"));
+    }
     /**
-     * POST, PUT, DELETE на несуществующий репозиторий
-     * DELETE несуществующих триплов в графе (дефолтовом или именованном) из параметра context
-     * DELETE существующих триплов (одного или всех) в графе (дефолтовом или именованном) из параметра context
+     * POST, DELETE на несуществующий репозиторий ------- done
+     * PUT на несуществующий репозиторий
+     * DELETE несуществующих триплов в графе (дефолтовом или именованном) из параметра context------ done
+     * DELETE существующих триплов (одного или всех) в графе (дефолтовом или именованном) из параметра context -----done
      * POST пары триплов перезаписывает существующие 2 трипла в графе (дефолтовом или именованном) из параметра context
-     * PUT пары триплов очищает граф (дефолтовом или именованном) из параметра context
+     * PUT пары триплов очищает граф (дефолтовом или именованном) из параметра context ---- done
      */
 }
