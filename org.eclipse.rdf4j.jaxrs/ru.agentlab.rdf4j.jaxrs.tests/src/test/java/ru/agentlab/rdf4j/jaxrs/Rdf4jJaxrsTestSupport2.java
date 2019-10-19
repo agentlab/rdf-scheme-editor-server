@@ -59,6 +59,7 @@ import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.RerunTestException;
 import org.ops4j.pax.exam.TestProbeBuilder;
+import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
 import org.ops4j.pax.exam.karaf.options.LogLevelOption;
 import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 import org.osgi.framework.Bundle;
@@ -182,19 +183,20 @@ public class Rdf4jJaxrsTestSupport2 {
         }
 
         return new Option[] {
-                // enable for remote debugging
-                // KarafDistributionOption.debugConfiguration("8889", true),
-                karafDistributionConfiguration().frameworkUrl(karafUrl).name("Apache Karaf").unpackDirectory(new File("target/exam")),
-                // enable JMX RBAC security, thanks to the KarafMBeanServerBuilder
-                configureSecurity().disableKarafMBeanServerBuilder(),
-                // configureConsole().ignoreLocalConsole(),
-                keepRuntimeFolder(), logLevel(LogLevelOption.LogLevel.INFO), mavenBundle().groupId("org.awaitility").artifactId("awaitility").versionAsInProject(),
-                mavenBundle().groupId("org.apache.servicemix.bundles").artifactId("org.apache.servicemix.bundles.hamcrest").versionAsInProject(), mavenBundle().groupId("org.apache.karaf.itests").artifactId("common").versionAsInProject(),
-                features(maven().groupId("ru.agentlab.rdf4j").artifactId("ru.agentlab.rdf4j.features").type("xml").version("0.0.1-SNAPSHOT"), "ru.agentlab.rdf4j.jaxrs"),
-                // mavenBundle().groupId("org.mockito").artifactId("mockito-core").version("2.23.4"),
-                junitBundles(), editConfigurationFilePut("etc/org.apache.felix.http.cfg", "org.osgi.service.http.port", httpPort), editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiRegistryPort", rmiRegistryPort),
-                editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiServerPort", rmiServerPort), editConfigurationFilePut("etc/org.apache.karaf.shell.cfg", "sshPort", sshPort),
-                editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg", "org.ops4j.pax.url.mvn.localRepository", localRepository) };
+            // enable for remote debugging
+            //KarafDistributionOption.debugConfiguration("5005", true),
+            karafDistributionConfiguration().frameworkUrl(karafUrl).name("Apache Karaf").unpackDirectory(new File("target/exam")),
+            // enable JMX RBAC security, thanks to the KarafMBeanServerBuilder
+            configureSecurity().disableKarafMBeanServerBuilder(),
+            // configureConsole().ignoreLocalConsole(),
+            keepRuntimeFolder(), logLevel(LogLevelOption.LogLevel.INFO), mavenBundle().groupId("org.awaitility").artifactId("awaitility").versionAsInProject(),
+            mavenBundle().groupId("org.apache.servicemix.bundles").artifactId("org.apache.servicemix.bundles.hamcrest").versionAsInProject(), mavenBundle().groupId("org.apache.karaf.itests").artifactId("common").versionAsInProject(),
+            features(maven().groupId("ru.agentlab.rdf4j").artifactId("ru.agentlab.rdf4j.features").type("xml").version("0.0.1-SNAPSHOT"), "ru.agentlab.rdf4j.jaxrs"),
+            // mavenBundle().groupId("org.mockito").artifactId("mockito-core").version("2.23.4"),
+            junitBundles(), editConfigurationFilePut("etc/org.apache.felix.http.cfg", "org.osgi.service.http.port", httpPort), editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiRegistryPort", rmiRegistryPort),
+            editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiServerPort", rmiServerPort), editConfigurationFilePut("etc/org.apache.karaf.shell.cfg", "sshPort", sshPort),
+            editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg", "org.ops4j.pax.url.mvn.localRepository", localRepository)
+        };
     }
     
     public static int getAvailablePort(int min, int max) {

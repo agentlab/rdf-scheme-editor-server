@@ -24,14 +24,12 @@ import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.algebra.evaluation.QueryBindingSet;
 import org.eclipse.rdf4j.query.impl.IteratingTupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryException;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ru.agentlab.rdf4j.jaxrs.sparql.providers.QueryResultModel;
+import ru.agentlab.rdf4j.jaxrs.sparql.providers.TupleQueryResultModel;
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
 
@@ -47,21 +45,10 @@ public class RepositoryListController {
 	@Reference
 	private RepositoryManagerComponent repositoryManager;
 
-	@Activate
-    public void activate() {
-        logger.info("Activate " + this.getClass().getSimpleName());
-    }
-
-    @Deactivate
-    public void deactivate() {
-        logger.info("Deactivate " + this.getClass().getSimpleName());
-    }
-
 	@GET
 	@Path("/repositories")
     @Produces({"application/json", "application/sparql-results+json"})
-    public QueryResultModel list(@Context UriInfo uriInfo) throws WebApplicationException {
-		System.out.println("Start repo list retrieving");
+    public TupleQueryResultModel list(@Context UriInfo uriInfo) throws WebApplicationException {
 		ValueFactory vf = SimpleValueFactory.getInstance();
 
 		List<BindingSet> bindingSets = new ArrayList<>();
@@ -98,10 +85,7 @@ public class RepositoryListController {
 			throw new WebApplicationException("Repository list query error: " + e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
 		}
 
-		System.out.println("bindingSets=" + bindingSets.toString());
-
-		System.out.println("End repo list retrieving");
-		QueryResultModel queryResultModel = new QueryResultModel();
+		TupleQueryResultModel queryResultModel = new TupleQueryResultModel();
 		queryResultModel.put("queryResult", new IteratingTupleQueryResult(bindingNames, bindingSets));
 		return queryResultModel;
     }

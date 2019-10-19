@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 @Provider
 //@JaxrsExtension
 @Produces({"application/json", "application/sparql-results+json"})
-public class TupleQueryResultJsonMessageBodyWriter implements MessageBodyWriter<QueryResultModel> {
+public class TupleQueryResultJsonMessageBodyWriter implements MessageBodyWriter<TupleQueryResultModel> {
 	private final Logger logger = LoggerFactory.getLogger(TupleQueryResultJsonMessageBodyWriter.class);
 	
 	protected static final String DEFAULT_JSONP_CALLBACK_PARAMETER = "callback";
@@ -53,19 +53,17 @@ public class TupleQueryResultJsonMessageBodyWriter implements MessageBodyWriter<
 	//}
 
 	@Override
-	public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations,
-			MediaType mediaType) {
-		return QueryResultModel.class.isAssignableFrom(type);
+	public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
+		return TupleQueryResultModel.class.isAssignableFrom(type);
 	}
 
 	@Override
-	public long getSize(QueryResultModel t, Class<?> type, Type genericType,
-			Annotation[] annotations, MediaType mediaType) {
+	public long getSize(TupleQueryResultModel t, Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
 		return -1;
 	}
 
 	@Override
-	public void writeTo(QueryResultModel queryResultModel, Class<?> type, Type genericType,
+	public void writeTo(TupleQueryResultModel queryResultModel, Class<?> type, Type genericType,
 			Annotation[] annotations, MediaType mediaType, MultivaluedMap<String,
 			Object> httpHeaders, OutputStream entityStream) throws IOException, WebApplicationException {
 		

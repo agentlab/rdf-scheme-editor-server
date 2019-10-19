@@ -1,4 +1,4 @@
-package ru.agentlab.rdf4j.jaxrs.repository;
+package ru.agentlab.rdf4j.jaxrs.repository.graph;
 
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -33,9 +33,7 @@ import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,16 +56,6 @@ public class GraphController {
         System.out.println("Started");
     }
 
-    @Activate
-    public void activate() {
-        logger.info("Activate " + this.getClass().getSimpleName());
-    }
-
-    @Deactivate
-    public void deactivate() {
-        logger.info("Deactivate " + this.getClass().getSimpleName());
-    }
-
     @GET
     @Path("/repositories/{repId}/rdf-graphs/{graphName}")
     public Response getGraph(@PathParam("repId") String repId, @PathParam("graphName") String graphName, @Context UriInfo uri) throws IOException {
@@ -75,7 +63,7 @@ public class GraphController {
         System.out.println("repId = " + repId);
         System.out.println("graphName = " + graphName);
 
-        Repository repository = repositoryManager.getRepository(repId);
+        final Repository repository = repositoryManager.getRepository(repId);
         if (repository == null)
             throw new WebApplicationException("Repository with id=" + repId + " not found", NOT_FOUND);
 
@@ -89,7 +77,6 @@ public class GraphController {
             // IRI IRIgraph = vf.createIRI(graphName);
             IRI IRIgraph = vf.createIRI(myUri); // ??????????
             Resource[] graph = new Resource[] { IRIgraph };
-            final Repository r = repository;
 
             fileStream = new StreamingOutput() {
                 @Override
@@ -97,7 +84,7 @@ public class GraphController {
                     try {
                         RDFWriter writer = Rio.createWriter(RDFFormat.RDFXML, output);
 
-                        r.getConnection().exportStatements(null, null, null, true, writer, graph);
+                        repository.getConnection().exportStatements(null, null, null, true, writer, graph);
                         System.out.println("Statements получены");
                     } catch (Exception e) {
                         throw new WebApplicationException("File Not Found !!", NOT_FOUND);

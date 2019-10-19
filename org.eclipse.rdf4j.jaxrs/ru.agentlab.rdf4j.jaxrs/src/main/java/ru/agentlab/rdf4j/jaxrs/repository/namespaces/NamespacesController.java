@@ -1,4 +1,4 @@
-package ru.agentlab.rdf4j.jaxrs.repository;
+package ru.agentlab.rdf4j.jaxrs.repository.namespaces;
 
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
@@ -29,9 +29,7 @@ import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.RepositoryResult;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,16 +44,6 @@ public class NamespacesController {
 
     @Reference
     private RepositoryManagerComponent repositoryManager;
-
-    @Activate
-    public void activate() {
-        logger.info("Activate " + this.getClass().getSimpleName());
-    }
-
-    @Deactivate
-    public void deactivate() {
-        logger.info("Deactivate " + this.getClass().getSimpleName());
-    }
 
     @GET
     @Path("/repositories/{repId}/namespaces")

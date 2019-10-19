@@ -50,19 +50,17 @@ public class RepositoryControllerTest extends Rdf4jJaxrsTestSupport {
     @Test
     public void createQuryAndDeleteNativeRepository_withRepositoryManagerComponent_ShouldWork() throws Exception {
         // testing a command execution
-        String bundles = executeCommand("bundle:list -t 0");
-        System.out.println(bundles);
-        assertContains("junit", bundles);
+        //String bundles = executeCommand("bundle:list -t 0");
+        //System.out.println(bundles);
+        //assertContains("junit", bundles);
 
-        String features = executeCommand("feature:list -i");
-        System.out.print(features);
-        assertContains("scr", features);
+        //String features = executeCommand("feature:list -i");
+        //System.out.print(features);
+        //assertContains("scr", features);
 
         // using a service and assert state or result
         //RepositoryManagerComponent manager = getOsgiService(RepositoryManagerComponent.class);
         assertNotNull(manager);
-        //System.out.println("Size=" + manager.getAllRepositories().size());
-        //System.out.println("Location=" + manager.getLocation());
 
         String repId = "id1233";
         assertNull(manager.getRepositoryInfo(repId));
@@ -120,7 +118,6 @@ public class RepositoryControllerTest extends Rdf4jJaxrsTestSupport {
 		Map<String, String> queryParams = new HashMap<>();
 		queryParams.put("Repository ID", repId);
 		String strConfTemplate = ct.render(queryParams);
-		//System.out.println("ConfigTemplate render: " + strConfTemplate);
 
 		//prereq check
 		assertNull(manager.getRepositoryInfo(repId));
@@ -128,20 +125,14 @@ public class RepositoryControllerTest extends Rdf4jJaxrsTestSupport {
 		WebClient client = WebClient.create(address);
 		client.type("text/turtle");
 		client.accept(MediaType.WILDCARD);
-		System.out.println("PUT on address=" + address);
 		Response response = client.put(strConfTemplate);
-		System.out.println("response.status=" + response.getStatusInfo().getReasonPhrase());
-		System.out.println("response.body=" + response.readEntity(String.class));
 		assertEquals(204, response.getStatus());
 		assertNotNull(manager.getRepositoryInfo(repId));
 		client.close();
 
 		WebClient client2 = WebClient.create(address);
 		client2.accept(MediaType.WILDCARD);
-		System.out.println("DELETE on address=" + address);
 		Response response2 = client2.delete();
-		System.out.println("response2.status=" + response2.getStatusInfo().getReasonPhrase());
-		System.out.println("response2.body=" + response2.readEntity(String.class));
 		assertEquals(204, response2.getStatus());
 		assertNull(manager.getRepositoryInfo(repId));
 		client2.close();
@@ -176,10 +167,7 @@ public class RepositoryControllerTest extends Rdf4jJaxrsTestSupport {
 		WebClient client = WebClient.create(address);
 		client.type("application/sparql-query");
 		client.accept("application/sparql-results+json");
-		System.out.println("POST on address=" + address);
 		Response response = client.post("select ?s ?p ?o where {?s ?p ?o}");
-		System.out.println("response.status=" + response.getStatusInfo().getReasonPhrase());
-		System.out.println("response.body=" + response.readEntity(String.class));
 		assertEquals(200, response.getStatus());
 		client.close();
 	}

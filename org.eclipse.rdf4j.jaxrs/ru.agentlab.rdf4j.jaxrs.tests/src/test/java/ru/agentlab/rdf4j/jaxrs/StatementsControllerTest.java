@@ -5,7 +5,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -134,6 +133,7 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
     public Model getAllStatemnts(){
         WebClient client2 = webClientCreator(address);
         System.out.println("getAllStat: " + address);
+        client2.accept(new MediaType("text", "turtle"));
         Response response2 = client2.get();
         String gotString = response2.readEntity(String.class);
         assertEquals(200, response2.getStatus());

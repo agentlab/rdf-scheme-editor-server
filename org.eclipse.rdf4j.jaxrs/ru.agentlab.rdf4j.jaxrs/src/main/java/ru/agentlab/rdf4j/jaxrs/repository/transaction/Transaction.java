@@ -59,7 +59,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
  * 
  * @author Jeen Broekstra
  */
-class Transaction implements AutoCloseable {
+public class Transaction implements AutoCloseable {
 
     private static final Logger logger = LoggerFactory.getLogger(Transaction.class);
 
@@ -220,7 +220,7 @@ class Transaction implements AutoCloseable {
      * @throws ExecutionException
      * @throws InterruptedException
      */
-    void exportStatements(Resource subj, IRI pred, Value obj, boolean useInferencing, RDFWriter rdfWriter,
+    public void exportStatements(Resource subj, IRI pred, Value obj, boolean useInferencing, RDFWriter rdfWriter,
             Resource... contexts) throws InterruptedException, ExecutionException {
         Future<Boolean> result = submit(() -> {
             txnConnection.exportStatements(subj, pred, obj, useInferencing, rdfWriter, contexts);
