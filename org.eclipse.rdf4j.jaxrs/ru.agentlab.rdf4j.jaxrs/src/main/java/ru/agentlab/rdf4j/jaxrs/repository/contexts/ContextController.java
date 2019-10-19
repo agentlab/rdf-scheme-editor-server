@@ -1,6 +1,6 @@
-package ru.agentlab.rdf4j.jaxrs.repository;
+package ru.agentlab.rdf4j.jaxrs.repository.contexts;
 
-import static javax.ws.rs.core.Response.Status.*;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,32 +18,18 @@ import org.eclipse.rdf4j.query.impl.ListBindingSet;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
 @Component(service = ContextController.class, property = { "osgi.jaxrs.resource=true" })
 @Path("/rdf4j-server")
 public class ContextController {
-    private static final Logger logger = LoggerFactory.getLogger(ContextController.class);
+    //private static final Logger logger = LoggerFactory.getLogger(ContextController.class);
 
     @Reference
     private RepositoryManagerComponent repositoryManager;
-
-    @Activate
-    public void activate() {
-        logger.info("Activate " + this.getClass().getSimpleName());
-    }
-
-    @Deactivate
-    public void deactivate() {
-        logger.info("Deactivate " + this.getClass().getSimpleName());
-    }
 
     @GET
     @Path("/repositories/{repid}/context")

@@ -10,7 +10,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -27,7 +26,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.eclipse.rdf4j.http.protocol.Protocol;
 import org.eclipse.rdf4j.http.protocol.error.ErrorInfo;
 import org.eclipse.rdf4j.http.protocol.error.ErrorType;
@@ -46,19 +44,17 @@ import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
-import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ru.agentlab.rdf4j.jaxrs.HTTPException;
 import ru.agentlab.rdf4j.jaxrs.repository.ProtocolUtils;
+import ru.agentlab.rdf4j.jaxrs.sparql.providers.StatementsResultModel;
 import ru.agentlab.rdf4j.jaxrs.util.HttpServerUtil;
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
@@ -70,46 +66,36 @@ public class StatementsController {
 	@Reference
 	private RepositoryManagerComponent repositoryManager;
 
-	@Activate
-	public void activate() {
-		logger.info("Activate " + this.getClass().getSimpleName());
-	}
-
-	@Deactivate
-	public void deactivate() {
-		logger.info("Deactivate " + this.getClass().getSimpleName());
-	}
-
 	@GET
 	@Path("/repositories/{repId}/statements")
-	public String getStatements(@PathParam("repId") String repId,
+	public StatementsResultModel getStatements(@PathParam("repId") String repId,
 			@QueryParam("subj") String subjStr,
 			@QueryParam("pred") String predStr,
 			@QueryParam("obj") String objStr,
-			@QueryParam("infer") @DefaultValue("true") boolean useInferencing) {
+			@QueryParam("infer") @DefaultValue("true") boolean useInferencing,
+			@QueryParam("context") String[] contextsStr) {
 		logger.info("GET statements");
 		Repository repository = repositoryManager.getRepository(repId);
 		ValueFactory vf = repository.getValueFactory();
 
-		Resource subj = parseResourceParam("subj", subjStr, vf);
-		IRI pred = parseURIParam("pred", predStr, vf);
-		Value obj = parseValueParam("obj", objStr, vf);
-		//Resource[] contexts = ProtocolUtil.parseContextParam(request, CONTEXT_PARAM_NAME, vf);
-
-		OutputStream out = new ByteArrayOutputStream();
+		Resource subj = Protocol.decodeResource(subjStr, vf);
+		IRI pred = Protocol.decodeURI(predStr, vf);
+		Value obj = Protocol.decodeValue(objStr, vf);
+		Resource[] contexts = Protocol.decodeContexts(contextsStr, vf);
 
 		try {
-			RDFWriter rdfWriter = Rio.createWriter(RDFFormat.TURTLE, out);
-			RepositoryConnection conn1 = repository.getConnection();
-			conn1.exportStatements(subj, pred, obj, useInferencing, rdfWriter);
+		    StatementsResultModel model = new StatementsResultModel();
+		    model.setConn(repository.getConnection());
+		    model.setSubj(subj);
+		    model.setPred(pred);
+		    model.setObj(obj);
+		    model.setContexts(contexts);
+			return model;
 		} catch (RDFHandlerException e) {
-			throw new WebApplicationException("Serialization error: " + e.getMessage(), e,
-					INTERNAL_SERVER_ERROR);
+			throw new WebApplicationException("Serialization error: " + e.getMessage(), e, INTERNAL_SERVER_ERROR);
 		} catch (RepositoryException e) {
-			throw new WebApplicationException("Repository error: " + e.getMessage(), e,
-					INTERNAL_SERVER_ERROR);
+			throw new WebApplicationException("Repository error: " + e.getMessage(), e, INTERNAL_SERVER_ERROR);
 		}
-		return out.toString();
 	}
 
 	@PUT
@@ -119,13 +105,14 @@ public class StatementsController {
 			@QueryParam("context") String context,
 			@QueryParam("baseURI") String baseUriStr,
 			@QueryParam("preserveNodeId") @DefaultValue("false") boolean preserveNodeIds,
+			@QueryParam("context") String[] contextsStr,
 			InputStream in) throws RepositoryException, IOException, HTTPException {
 		Repository repository = repositoryManager.getRepository(repId);
 		if(repository == null)
 			throw new WebApplicationException("Cannot find repository '" + repId, NOT_FOUND);
 
 		String mimeType = HttpServerUtil.getMIMEType(headers.getHeaderString(HttpHeaders.CONTENT_TYPE));
-		getAddDataResult(repository, headers, baseUriStr, preserveNodeIds, mimeType, in, true);
+		getAddDataResult(repository, headers, baseUriStr, preserveNodeIds, mimeType, contextsStr, in, true);
 	}
 
 	@POST
@@ -133,7 +120,7 @@ public class StatementsController {
 	//@Consumes ({"application/x-www-form-urlencoded", "text/turtle"})
 	public void addStatements(@Context HttpHeaders headers,
 			@PathParam("repId") String repId,
-			@QueryParam("context") String context,
+            @QueryParam("context") String[] contextsStr,
 			@QueryParam("baseURI") String baseUriStr,
 			@QueryParam("infer") @DefaultValue("true") boolean includeInferred,
 			@QueryParam("timeout") int maxQueryTime,
@@ -141,21 +128,13 @@ public class StatementsController {
 			@QueryParam("preserveNodeId") @DefaultValue("false") boolean preserveNodeIds,
 			InputStream inStream) throws RepositoryException, IOException, HTTPException {
 		logger.info("POST data to repository");
+		//logger.info("repId={}, queryLn={}, baseURI={}, infer={}, timeout={}, distinct={}, limit={}, offset={}", repId, queryLnStr, includeInferred, maxQueryTime);
+		
 		Repository repository = repositoryManager.getRepository(repId);
 		if(repository == null)
 			throw new WebApplicationException("Cannot find repository '" + repId, NOT_FOUND);
 
 		String mimeType = HttpServerUtil.getMIMEType(headers.getHeaderString(HttpHeaders.CONTENT_TYPE));
-
-		//if (queryUpdate == null && formUpdate != null)
-		//	queryUpdate = formUpdate;
-
-		//int qryCode = 0;
-		//if (logger.isInfoEnabled() || logger.isDebugEnabled()) {
-		//	qryCode = String.valueOf(formUpdate).hashCode();
-		//}
-		//logger.info("query {} = {}", qryCode, formUpdate);
-		logger.info("repId={}, queryLn={}, baseURI={}, infer={}, timeout={}, distinct={}, limit={}, offset={}", repId, queryLnStr, includeInferred, maxQueryTime);
 
 		if (Protocol.TXN_MIME_TYPE.equals(mimeType)) {
 			logger.info("POST transaction to repository");
@@ -174,7 +153,7 @@ public class StatementsController {
 			getSparqlUpdateResult(repository, headers, baseUriStr, preserveNodeIds, mimeType, queryUpdate, queryLnStr, includeInferred, maxQueryTime);
 		} else {
 			logger.info("POST data to repository");
-			getAddDataResult(repository, headers, baseUriStr, preserveNodeIds, mimeType, inStream, false);
+			getAddDataResult(repository, headers, baseUriStr, preserveNodeIds, mimeType, contextsStr, inStream, false);
 		}
 	}
 
@@ -183,7 +162,7 @@ public class StatementsController {
 	@Consumes ({"application/x-www-form-urlencoded"})
 	public void addStatements(@Context HttpHeaders headers,
 			@PathParam("repId") String repId,
-			@QueryParam("context") String context,
+			@QueryParam("context") String[] contextsStr,
 			@QueryParam("baseURI") String baseUriStr,
 			@QueryParam("infer") @DefaultValue("true") boolean includeInferred,
 			@QueryParam("timeout") int maxQueryTime,
@@ -347,7 +326,7 @@ public class StatementsController {
 	 * Upload data to the repository.
 	 */
 	private void getAddDataResult(Repository repository, HttpHeaders headers, String baseUriStr,
-			boolean preserveNodeIds, String mimeType, InputStream inStream, boolean replaceCurrent)
+			boolean preserveNodeIds, String mimeType, String[] contextsStr, InputStream inStream, boolean replaceCurrent)
 			throws RepositoryException, IOException, HTTPException {
 		RDFFormat rdfFormat = Rio.getParserFormatForMIMEType(mimeType)
 			.orElseThrow(
@@ -355,8 +334,8 @@ public class StatementsController {
 
 		ValueFactory vf = repository.getValueFactory();
 
-		Resource[] contexts = {};//ProtocolUtil.parseContextParam(request, CONTEXT_PARAM_NAME, vf);
-		IRI baseURI = parseURIParam("baseURI", baseUriStr, vf);
+		Resource[] contexts = Protocol.decodeContexts(contextsStr, vf);
+		IRI baseURI = Protocol.decodeURI(baseUriStr, vf);
 
 		if (baseURI == null) {
 			baseURI = vf.createIRI("foo:bar");
@@ -395,39 +374,12 @@ public class StatementsController {
 			}
 		}
 	}
-
-	public static Resource parseResourceParam(String paramName, String paramValue, ValueFactory vf) throws WebApplicationException {
-		try {
-			return Protocol.decodeResource(paramValue, vf);
-		} catch (IllegalArgumentException e) {
-			throw new WebApplicationException("Invalid value for parameter '" + paramName + "': " + paramValue,
-					BAD_REQUEST);
-		}
-	}
-
-	public static IRI parseURIParam(String paramName, String paramValue, ValueFactory vf) throws WebApplicationException {
-		try {
-			return Protocol.decodeURI(paramValue, vf);
-		} catch (IllegalArgumentException e) {
-			throw new WebApplicationException("Invalid value for parameter '" + paramName + "': " + paramValue,
-					BAD_REQUEST);
-		}
-	}
-
-	public static Value parseValueParam(String paramName, String paramValue, ValueFactory vf) throws WebApplicationException {
-		try {
-			return Protocol.decodeValue(paramValue, vf);
-		} catch (IllegalArgumentException e) {
-			throw new WebApplicationException("Invalid value for parameter '" + paramName + "': " + paramValue,
-					BAD_REQUEST);
-		}
-	}
 	
 	@DELETE
     @Path("/repositories/{repId}/statements")
 	public void deleteStatements(@Context HttpHeaders headers,
             @PathParam("repId") String repId,
-            @QueryParam("context") String[] context,
+            @QueryParam("context") String[] contextsStr,
             @QueryParam("subj") String subjStr,
             @QueryParam("pred") String predStr,
             @QueryParam("obj") String objStr) throws RepositoryException, IOException, HTTPException {
@@ -442,7 +394,7 @@ public class StatementsController {
         Resource subj = Protocol.decodeResource(subjStr, vf);
         IRI pred = Protocol.decodeURI(predStr, vf);
         Value obj = Protocol.decodeValue(objStr, vf);
-        Resource[] contexts = Protocol.decodeContexts(context, vf);
+        Resource[] contexts = Protocol.decodeContexts(contextsStr, vf);
 
         try (RepositoryConnection repositoryCon = repository.getConnection()) {
             repositoryCon.remove(subj, pred, obj, contexts);

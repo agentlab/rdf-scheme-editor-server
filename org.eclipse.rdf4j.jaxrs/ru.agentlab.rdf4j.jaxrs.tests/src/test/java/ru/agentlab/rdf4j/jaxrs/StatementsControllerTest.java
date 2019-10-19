@@ -36,7 +36,6 @@ import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
-import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.junit.PaxExamParameterized;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
@@ -117,6 +116,7 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
 
     public Model getAllStatemnts(){
         WebClient client2 = webClientCreator(address);
+        client2.accept(new MediaType("text", "turtle"));
         Response response2 = client2.get();
         String gotString = response2.readEntity(String.class);
         assertEquals(200, response2.getStatus());
@@ -198,7 +198,6 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
     @Test
     public void postStatementsShouldWorkOk() {
         modelBeforeDelete = getAllStatemnts();
-        //TODO sdfsdfdsf
         assertTrue(true);
     }
     
