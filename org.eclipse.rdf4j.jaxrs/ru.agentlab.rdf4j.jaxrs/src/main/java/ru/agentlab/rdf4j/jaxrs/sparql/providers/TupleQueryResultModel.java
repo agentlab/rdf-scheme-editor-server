@@ -3,7 +3,7 @@ package ru.agentlab.rdf4j.jaxrs.sparql.providers;
 import java.util.HashMap;
 import java.util.Map;
 
-public class QueryResultModel {
+public class TupleQueryResultModel {
 	protected Map<String, Object> map = new HashMap<>();
 	
 	public Object put(String key, Object value) {

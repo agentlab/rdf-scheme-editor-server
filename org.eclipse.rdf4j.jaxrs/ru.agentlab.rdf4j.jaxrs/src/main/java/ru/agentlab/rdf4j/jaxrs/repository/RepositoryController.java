@@ -37,8 +37,6 @@ import org.eclipse.rdf4j.http.protocol.error.ErrorInfo;
 import org.eclipse.rdf4j.http.protocol.error.ErrorType;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.query.BooleanQuery;
 import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.GraphQueryResult;
@@ -61,15 +59,13 @@ import org.eclipse.rdf4j.repository.config.RepositoryConfigUtil;
 import org.eclipse.rdf4j.repository.manager.SystemRepository;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ru.agentlab.rdf4j.jaxrs.HTTPException;
-import ru.agentlab.rdf4j.jaxrs.sparql.providers.QueryResultModel;
+import ru.agentlab.rdf4j.jaxrs.sparql.providers.TupleQueryResultModel;
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
 /**
@@ -85,23 +81,13 @@ public class RepositoryController {
 	@Reference
 	private RepositoryManagerComponent repositoryManager;
 
-	@Activate
-	public void activate() {
-		logger.info("Activate " + this.getClass().getSimpleName());
-	}
-
-	@Deactivate
-	public void deactivate() {
-		logger.info("Deactivate " + this.getClass().getSimpleName());
-	}
-
 	/**
 	 * TODO: HEAD method???
 	 */
 	@GET
 	@Path("/repositories/{repId}")
 	@Produces({ "application/json", "application/sparql-results+json" })
-	public QueryResultModel get(@Context UriInfo uriInfo,
+	public TupleQueryResultModel get(@Context UriInfo uriInfo,
 			@PathParam("repId") String repId,
 			@QueryParam("query") String queryStr,
 			@QueryParam("queryLn") String queryLnStr,
@@ -175,7 +161,7 @@ public class RepositoryController {
 						throw new WebApplicationException("Query evaluation error: " + e.getMessage(), INTERNAL_SERVER_ERROR);
 					}
 				}
-				QueryResultModel queryResultModel = new QueryResultModel();
+				TupleQueryResultModel queryResultModel = new TupleQueryResultModel();
 				queryResultModel.put("queryResult", queryResult);
 				queryResultModel.put("connection", repositoryCon);
 				return queryResultModel;
@@ -194,7 +180,7 @@ public class RepositoryController {
 	@Path("/repositories/{repId}")
 	@Produces({ "application/json", "application/sparql-results+json" })
 	@Consumes(Protocol.SPARQL_QUERY_MIME_TYPE)
-	public QueryResultModel createSparql(@Context UriInfo uriInfo,
+	public TupleQueryResultModel createSparql(@Context UriInfo uriInfo,
 			@PathParam("repId") String repId,
 			String queryStr,
 			@QueryParam("queryLn") String queryLnStr,
@@ -266,7 +252,7 @@ public class RepositoryController {
 						throw new WebApplicationException("Query evaluation error: " + e.getMessage(), INTERNAL_SERVER_ERROR);
 					}
 				}
-				QueryResultModel queryResultModel = new QueryResultModel();
+				TupleQueryResultModel queryResultModel = new TupleQueryResultModel();
 				queryResultModel.put("queryResult", queryResult);
 				queryResultModel.put("connection", repositoryCon);
 				return queryResultModel;
@@ -437,20 +423,4 @@ public class RepositoryController {
 			throw new WebApplicationException("Repository delete error: " + e.getMessage(), INTERNAL_SERVER_ERROR);
 		}
 	}
-
-	@GET
-    @Path("/repositories/{repId}/size")
-    public long getRepositorySize(@PathParam("repId") String repId, @QueryParam("context") String[] context) {
-        long size = -1;
-        Repository repository = repositoryManager.getRepository(repId);
-        if(repository == null)
-            throw new WebApplicationException("Repository with id=" + repId + " not found", NOT_FOUND);
-        
-        //TODO: проверить context
-        ValueFactory vf = repository.getValueFactory();
-        Resource[] contexts = Protocol.decodeContexts(context, vf);
-        size = repository.getConnection().size(contexts);
-        return size;
-    }
-
 }

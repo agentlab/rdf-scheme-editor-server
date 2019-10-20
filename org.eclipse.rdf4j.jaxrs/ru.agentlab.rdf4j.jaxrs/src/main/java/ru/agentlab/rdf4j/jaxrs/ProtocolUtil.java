@@ -7,8 +7,8 @@
  *******************************************************************************/
 package ru.agentlab.rdf4j.jaxrs;
 
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
-import static javax.servlet.http.HttpServletResponse.SC_NOT_ACCEPTABLE;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 
 import java.util.Collection;
 import java.util.Enumeration;
@@ -17,6 +17,7 @@ import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.WebApplicationException;
 
 import org.eclipse.rdf4j.common.lang.FileFormat;
 import org.eclipse.rdf4j.common.lang.service.FileFormatServiceRegistry;
@@ -41,39 +42,36 @@ import ru.agentlab.rdf4j.jaxrs.util.HttpServerUtil;
 public class ProtocolUtil {
 
 	public static Value parseValueParam(HttpServletRequest request, String paramName, ValueFactory vf)
-			throws ClientHTTPException {
+			throws WebApplicationException {
 		String paramValue = request.getParameter(paramName);
 		try {
 			return Protocol.decodeValue(paramValue, vf);
 		} catch (IllegalArgumentException e) {
-			throw new ClientHTTPException(SC_BAD_REQUEST,
-					"Invalid value for parameter '" + paramName + "': " + paramValue);
+			throw new WebApplicationException("Invalid value for parameter '" + paramName + "': " + paramValue, BAD_REQUEST);
 		}
 	}
 
 	public static Resource parseResourceParam(HttpServletRequest request, String paramName, ValueFactory vf)
-			throws ClientHTTPException {
+			throws WebApplicationException {
 		String paramValue = request.getParameter(paramName);
 		try {
 			return Protocol.decodeResource(paramValue, vf);
 		} catch (IllegalArgumentException e) {
-			throw new ClientHTTPException(SC_BAD_REQUEST,
-					"Invalid value for parameter '" + paramName + "': " + paramValue);
+			throw new WebApplicationException("Invalid value for parameter '" + paramName + "': " + paramValue, BAD_REQUEST);
 		}
 	}
 
 	public static IRI parseURIParam(HttpServletRequest request, String paramName, ValueFactory vf)
-			throws ClientHTTPException {
+			throws WebApplicationException {
 		String paramValue = request.getParameter(paramName);
 		try {
 			return Protocol.decodeURI(paramValue, vf);
 		} catch (IllegalArgumentException e) {
-			throw new ClientHTTPException(SC_BAD_REQUEST,
-					"Invalid value for parameter '" + paramName + "': " + paramValue);
+			throw new WebApplicationException("Invalid value for parameter '" + paramName + "': " + paramValue, BAD_REQUEST);
 		}
 	}
 
-	public static IRI parseGraphParam(HttpServletRequest request, ValueFactory vf) throws ClientHTTPException {
+	public static IRI parseGraphParam(HttpServletRequest request, ValueFactory vf) throws WebApplicationException {
 		String paramValue = request.getParameter(Protocol.GRAPH_PARAM_NAME);
 		if (paramValue == null) {
 			return null;
@@ -82,19 +80,17 @@ public class ProtocolUtil {
 		try {
 			return Protocol.decodeURI("<" + paramValue + ">", vf);
 		} catch (IllegalArgumentException e) {
-			throw new ClientHTTPException(SC_BAD_REQUEST,
-					"Invalid value for parameter '" + Protocol.GRAPH_PARAM_NAME + "': " + paramValue);
+			throw new WebApplicationException("Invalid value for parameter '" + Protocol.GRAPH_PARAM_NAME + "': " + paramValue, BAD_REQUEST);
 		}
 	}
 
 	public static Resource[] parseContextParam(HttpServletRequest request, String paramName, ValueFactory vf)
-			throws ClientHTTPException {
+			throws WebApplicationException {
 		String[] paramValues = request.getParameterValues(paramName);
 		try {
 			return Protocol.decodeContexts(paramValues, vf);
 		} catch (IllegalArgumentException e) {
-			throw new ClientHTTPException(SC_BAD_REQUEST,
-					"Invalid value for parameter '" + paramName + "': " + e.getMessage());
+			throw new WebApplicationException("Invalid value for parameter '" + paramName + "': " + e.getMessage(), BAD_REQUEST);
 		}
 	}
 
@@ -108,7 +104,7 @@ public class ProtocolUtil {
 	}
 
 	public static long parseLongParam(HttpServletRequest request, String paramName, long defaultValue)
-			throws ClientHTTPException {
+			throws WebApplicationException {
 		String paramValue = request.getParameter(paramName);
 		if (paramValue == null) {
 			return defaultValue;
@@ -116,8 +112,7 @@ public class ProtocolUtil {
 			try {
 				return Long.parseLong(paramValue);
 			} catch (IllegalArgumentException e) {
-				throw new ClientHTTPException(SC_BAD_REQUEST,
-						"Invalid value for parameter '" + paramName + "': " + e.getMessage());
+				throw new WebApplicationException("Invalid value for parameter '" + paramName + "': " + e.getMessage(), BAD_REQUEST);
 			}
 		}
 	}
@@ -140,7 +135,7 @@ public class ProtocolUtil {
 	}
 
 	public static <FF extends FileFormat, S> S getAcceptableService(HttpServletRequest request,
-			HttpServletResponse response, FileFormatServiceRegistry<FF, S> serviceRegistry) throws ClientHTTPException {
+			HttpServletResponse response, FileFormatServiceRegistry<FF, S> serviceRegistry) throws WebApplicationException {
 		// Accept-parameter takes precedence over request headers
 		String mimeType = request.getParameter(Protocol.ACCEPT_PARAM_NAME);
 		boolean hasAcceptParam = mimeType != null;
@@ -173,10 +168,10 @@ public class ProtocolUtil {
 
 		if (hasAcceptParam) {
 			ErrorInfo errInfo = new ErrorInfo(ErrorType.UNSUPPORTED_FILE_FORMAT, mimeType);
-			throw new ClientHTTPException(SC_BAD_REQUEST, errInfo.toString());
+			throw new WebApplicationException(errInfo.toString(), BAD_REQUEST);
 		} else {
 			// No acceptable format was found, send 406 as required by RFC 2616
-			throw new ClientHTTPException(SC_NOT_ACCEPTABLE, "No acceptable file format found.");
+			throw new WebApplicationException("No acceptable file format found.", NOT_ACCEPTABLE);
 		}
 	}
 
@@ -187,16 +182,16 @@ public class ProtocolUtil {
 	 * @param request the {@link HttpServletRequest} to read the parameter from
 	 * @return the value of the timeout parameter as an integer (representing the timeout time in seconds), or 0 if no
 	 *         timeout parameter is specified in the request.
-	 * @throws ClientHTTPException if the value of the timeout parameter is not a valid integer.
+	 * @throws WebApplicationException if the value of the timeout parameter is not a valid integer.
 	 */
-	public static int parseTimeoutParam(HttpServletRequest request) throws ClientHTTPException {
+	public static int parseTimeoutParam(HttpServletRequest request) throws WebApplicationException {
 		final String timeoutParam = request.getParameter(Protocol.TIMEOUT_PARAM_NAME);
 		int maxExecutionTime = 0;
 		if (timeoutParam != null) {
 			try {
 				maxExecutionTime = Integer.parseInt(timeoutParam);
 			} catch (NumberFormatException e) {
-				throw new ClientHTTPException(SC_BAD_REQUEST, "Invalid timeout value: " + timeoutParam);
+				throw new WebApplicationException("Invalid timeout value: " + timeoutParam, BAD_REQUEST);
 			}
 		}
 		return maxExecutionTime;

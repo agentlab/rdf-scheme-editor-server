@@ -15,6 +15,9 @@ import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 
+import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
+
+import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.InputStream;
@@ -38,6 +41,9 @@ import static org.junit.Assert.assertNotNull;
     private String graphNameSecond = "graph2";
     private RepositoryConnection repositoryCon;
     private ModelBuilder builder = new ModelBuilder();
+    
+    @Inject
+    protected RepositoryManagerComponent manager;
 
     @Before public void init() throws Exception {
         String ENDPOINT_ADDRESS = "http://localhost:" + getHttpPort() + "/rdf4j-server/repositories/";

@@ -38,10 +38,6 @@ public class RepositoryConfigController {
 	@Reference
 	private RepositoryManagerComponent repositoryManager;
 
-	public RepositoryConfigController() {
-		System.out.println("Init RepositoryConfigController");
-	}
-
 	@GET
 	@Path("/repconfigs")
     public String get(@QueryParam("type") String type) throws WebApplicationException {
