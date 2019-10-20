@@ -95,11 +95,10 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
     @Parameters
     public static List<String[]> data(){
         return Arrays.asList(new String[][] {
-                {"memory","null"}, {"native","null"}, {"native-rdfs","null"},
-
-                {"memory","%3Cfile%3A%2F%2FC%3A%2Ffakepath%2Fdefault-graph-1.ttl%3E"},
-                {"native","%3Cfile%3A%2F%2FC%3A%2Ffakepath%2Fdefault-graph-1.ttl%3E"},
-                {"native-rdfs","%3Cfile%3A%2F%2FC%3A%2Ffakepath%2Fdefault-graph-1.ttl%3E"}
+            {"memory","null"}, {"native","null"}, {"native-rdfs","null"},
+            {"memory","%3Cfile%3A%2F%2FC%3A%2Ffakepath%2Fdefault-graph-1.ttl%3E"},
+            {"native","%3Cfile%3A%2F%2FC%3A%2Ffakepath%2Fdefault-graph-1.ttl%3E"},
+            {"native-rdfs","%3Cfile%3A%2F%2FC%3A%2Ffakepath%2Fdefault-graph-1.ttl%3E"}
         });
     }
 
@@ -107,7 +106,7 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
     public void init() throws Exception {
         UUID uuid = UUID.randomUUID();
         repId = uuid.toString();
-        System.out.println("repId=" + repId);
+        System.out.println("repId=" + repId + ", testType=" + testType);
         TWO_TRIPLE_ADDRESS = "&obj=\"Bob\"&pred=<http://purl.org/dc/elements/1.1/publisher>";
         TRIPLE_ADDRESS = "&subj=%3Curn:x-local:graph1%3E&pred=<http://purl.org/dc/elements/1.1/publisher>&obj=\"Bob\""   ;
         ENDPOINT_ADDRESS = "http://localhost:" + getHttpPort() + "/rdf4j-server/repositories/";
@@ -187,7 +186,7 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
         clientDeleter.close();
         Model modelAfterDelete = getAllStatemnts();
         System.out.println("after: " + modelAfterDelete);
-        System.out.println("befpre:  " + modelBeforeDelete);
+        System.out.println("before:  " + modelBeforeDelete);
         checker.testCheck = modelAfterDelete.equals(modelBeforeDelete);
         return checker;
     }

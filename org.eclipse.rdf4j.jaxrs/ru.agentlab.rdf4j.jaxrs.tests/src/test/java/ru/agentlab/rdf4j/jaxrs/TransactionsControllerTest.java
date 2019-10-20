@@ -72,8 +72,6 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport {
         client.type(dataFormat.getDefaultMIMEType());
         client.accept(MediaType.WILDCARD);
         Response response = client.post(null);
-        System.out.println("response.status=" + response.getStatusInfo().getReasonPhrase());
-        System.out.println("response.body=" + response.readEntity(String.class));
         assertEquals(204, response.getStatus());
         client.close();
         

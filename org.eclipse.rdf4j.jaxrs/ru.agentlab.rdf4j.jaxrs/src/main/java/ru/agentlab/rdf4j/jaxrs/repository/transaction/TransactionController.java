@@ -139,7 +139,7 @@ public class TransactionController {
             } finally {
                 ActiveTransactionRegistry.INSTANCE.deregister(transaction);
             }
-            result = Response.ok().build();
+            result = Response.noContent().build();
             logger.info("PUT transaction rollback request finished.");
             break;
         default:
@@ -203,7 +203,7 @@ public class TransactionController {
             } finally {
                 ActiveTransactionRegistry.INSTANCE.deregister(transaction);
             }
-            result = Response.ok().build();
+            result = Response.noContent().build();
             logger.info("POST transaction rollback request finished.");
             break;
         default:
@@ -239,7 +239,7 @@ public class TransactionController {
         } finally {
             ActiveTransactionRegistry.INSTANCE.deregister(transaction);
         }
-        result = Response.ok().build();
+        result = Response.noContent().build();
         logger.info("DELETE transaction rollback request finished.");
         
         return result;
@@ -299,7 +299,7 @@ public class TransactionController {
                 logger.warn("transaction modification action '{}' not recognized", action);
                 throw new WebApplicationException("modification action not recognized: " + action);
             }
-            return Response.ok().build();
+            return Response.noContent().build();
         } catch (Exception e) {
             if (e instanceof WebApplicationException) {
                 throw (WebApplicationException) e;
@@ -312,31 +312,22 @@ public class TransactionController {
     private Response getSize(Transaction transaction, HttpServletRequest request) throws WebApplicationException, WebApplicationException {
         ProtocolUtil.logRequestParameters(request);
 
-        // Map<String, Object> model = new HashMap<String, Object>();
-        // model.put(ExportStatementsView.HEADERS_ONLY,
-        // METHOD_HEAD.equals(request.getMethod()));
-        final boolean headersOnly = false;// METHOD_HEAD.equals(request.getMethod());
+        String repId = (String) request.getAttribute("repositoryID");
+        Repository repository = repositoryManager.getRepository(repId);
+        if (repository == null)
+            throw new WebApplicationException("Repository with id=" + repId + " not found", NOT_FOUND);
 
-        if (!headersOnly) {
-            String repId = (String) request.getAttribute("repositoryID");
-            Repository repository = repositoryManager.getRepository(repId);
-            if (repository == null)
-                throw new WebApplicationException("Repository with id=" + repId + " not found", NOT_FOUND);
+        ValueFactory vf = repository.getValueFactory();
+        Resource[] contexts = ProtocolUtil.parseContextParam(request, Protocol.CONTEXT_PARAM_NAME, vf);
 
-            ValueFactory vf = repository.getValueFactory();
-            Resource[] contexts = ProtocolUtil.parseContextParam(request, Protocol.CONTEXT_PARAM_NAME, vf);
+        long size = -1;
 
-            long size = -1;
-
-            try {
-                size = transaction.getSize(contexts);
-            } catch (RepositoryException | InterruptedException | ExecutionException e) {
-                throw new WebApplicationException("Repository error: " + e.getMessage(), e);
-            }
-            // model.put(SimpleResponseView.CONTENT_KEY, String.valueOf(size));
-            return Response.ok(size).build();
+        try {
+            size = transaction.getSize(contexts);
+        } catch (RepositoryException | InterruptedException | ExecutionException e) {
+            throw new WebApplicationException("Repository error: " + e.getMessage(), e);
         }
-        return Response.ok().build();
+        return Response.ok(size).build();
     }
 
     /**
@@ -361,6 +352,7 @@ public class TransactionController {
         model.setPred(pred);
         model.setObj(obj);
         model.setContexts(contexts);
+        model.setUseInferencing(useInferencing);
         return model;
     }
 

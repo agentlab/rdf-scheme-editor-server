@@ -155,9 +155,6 @@ public class Rdf4jJaxrsTestSupport2 {
 
     
     public static TestProbeBuilder probeConfiguration(TestProbeBuilder probe) {
-        //System.out.println("TestProbeBuilder gets called");
-        // probe.setHeader(Constants.DYNAMICIMPORT_PACKAGE,
-        // "*,org.apache.felix.service.*;status=provisional");
         probe.setHeader(Constants.IMPORT_PACKAGE, "org.eclipse.rdf4j.query.algebra.evaluation.impl,org.apache.cxf.jaxrs.client");
         return probe;
     }
