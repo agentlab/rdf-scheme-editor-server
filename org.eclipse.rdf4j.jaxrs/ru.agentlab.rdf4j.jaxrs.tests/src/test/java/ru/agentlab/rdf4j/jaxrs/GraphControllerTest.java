@@ -62,7 +62,7 @@ import static org.junit.Assert.assertNotNull;
         System.out.println("POST statements to graph on address=" + address + graphNameFirst);
         WebClient clientForFirstGraph = WebClient.create(address + graphNameFirst);
         clientForFirstGraph.type(dataFormat.getDefaultMIMEType());
-        clientForFirstGraph.accept(MediaType.WILDCARD);
+        clientForFirstGraph.accept(new MediaType("text", "turtle"));
         InputStream dataStream1 = RepositoryControllerTest.class.getResourceAsStream(firstTTL);
         assertNotNull(dataStream1);
         assertThat("dataStream.available", dataStream1.available(), greaterThan(0));
@@ -76,7 +76,7 @@ import static org.junit.Assert.assertNotNull;
         System.out.println("POST statements to graph on address=" + address + graphNameSecond);
         WebClient clientForSecondGraph = WebClient.create(address + graphNameSecond);
         clientForSecondGraph.type(dataFormat.getDefaultMIMEType());
-        clientForSecondGraph.accept(MediaType.WILDCARD);
+        clientForSecondGraph.accept(new MediaType("text", "turtle"));
         InputStream dataStream2 = RepositoryControllerTest.class.getResourceAsStream(secondTTL);
         Response responseSecond = clientForSecondGraph.post(dataStream2);
 
@@ -87,7 +87,7 @@ import static org.junit.Assert.assertNotNull;
         String bodyFirst = responseFromGetFirst.readEntity(String.class);
         System.out.println("BODY FROM FIRST GET:\n" + bodyFirst);
         Reader readerFirst = new StringReader(bodyFirst);
-        Model modelFromGetOnFirstGraph = Rio.parse(readerFirst, "", RDFFormat.RDFXML);
+        Model modelFromGetOnFirstGraph = Rio.parse(readerFirst, "", RDFFormat.TURTLE);
         InputStream inputStreamForFirstFile = RepositoryControllerTest.class.getResourceAsStream(firstTTL);
         Model modelFromFirstFile = Rio.parse(inputStreamForFirstFile, "", dataFormat);
 
@@ -99,7 +99,7 @@ import static org.junit.Assert.assertNotNull;
         String bodySecond = responseFromGetSecond.readEntity(String.class);
         System.out.println("BODY FROM SECOND GET:\n" + bodySecond);
         Reader readerSecond = new StringReader(bodyFirst);
-        Model modelFromGetOnSecondGraph = Rio.parse(readerSecond, "", RDFFormat.RDFXML);
+        Model modelFromGetOnSecondGraph = Rio.parse(readerSecond, "", RDFFormat.TURTLE);
         InputStream inputStreamForSecondFile = RepositoryControllerTest.class.getResourceAsStream(firstTTL);
         Model modelFromSecondFile = Rio.parse(inputStreamForSecondFile, "", dataFormat);
 
@@ -120,7 +120,7 @@ import static org.junit.Assert.assertNotNull;
         //Тут удаляем один граф и проверяем, не пропадают ли триплы из других графов
         System.out.println("DELETE \"" + graphNameFirst + "\" from repository\"" + repId + "\" on address=" + address);
         clientForFirstGraph = WebClient.create(address);
-        clientForFirstGraph.accept(MediaType.WILDCARD);
+        clientForFirstGraph.accept(new MediaType("text", "turtle"));
         Response response3 = clientForFirstGraph.delete();
         assertThat("repositoryCon.size", repositoryCon.size(), equalTo(0L));
         System.out.println("response.status=" + response3.getStatusInfo().getReasonPhrase());
@@ -129,7 +129,7 @@ import static org.junit.Assert.assertNotNull;
         Response responseFromGetSecondForDelete = clientForSecondGraph.get();
         String bodySecondAfterDeletingFirstGraph = responseFromGetSecond.readEntity(String.class);
         Reader readerSecondAfterDeleting = new StringReader(bodyFirst);
-        Model modelFromGetOnSecondGraphAfterDeleting = Rio.parse(readerSecond, "", RDFFormat.RDFXML);
+        Model modelFromGetOnSecondGraphAfterDeleting = Rio.parse(readerSecond, "", RDFFormat.TURTLE);
 
         Assert.assertEquals(modelFromGetOnSecondGraph, modelFromGetOnSecondGraphAfterDeleting);
         assertEquals(204, response3.getStatus());
