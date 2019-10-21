@@ -31,6 +31,7 @@ public class HTTPRepositoryTest {
     private class Checker{
         String requestAnswer;
         boolean testCheck;
+        RepositoryResult<Statement> resultStatement;
     }
 
     @Before
@@ -45,7 +46,14 @@ public class HTTPRepositoryTest {
         rep.shutDown();
     }
 
-    public Checker AddHTTPRepShouldBeOk(){
+    public  Checker getHTTPRep(){
+        Checker checker = new Checker();
+        checker.resultStatement = repcon.getStatements(null,null,null);
+
+        return checker;
+    }
+
+    public Checker addHTTPRep(){
         Checker checker = new Checker();
         Model model = null;
         InputStream input = HTTPRepositoryTest.class.getResourceAsStream(file);
@@ -79,10 +87,38 @@ public class HTTPRepositoryTest {
         return checker;
     }
 
+    public Checker deleteHTTPRep( RepositoryResult<Statement> beforeDelete){
+        Checker checker = new Checker();
+        repcon.clear(null, null,null);
+        String gotString = null;
+        String strBeforeDelete = null;
+        RepositoryResult<Statement> result = repcon.getStatements(null,null, null);
+        while (result.hasNext()){
+            System.out.println("statement1 " + result.next());
+            gotString = "" + result.next();
+        }
+//        System.out.println(gotString);
+
+        while (beforeDelete.hasNext()){
+            strBeforeDelete = "" + beforeDelete;
+        }
+//        System.out.println(strBeforeDelete);
+
+
+//        checker.testCheck = gotString.equals(strBeforeDelete);
+//        checker.testCheck = true;
+        checker.testCheck =(gotString == null);
+        return checker;
+    }
+
     @Test
     public void HTTPRepositoryShouldWorkOk(){
         Checker checker ;
-        checker = AddHTTPRepShouldBeOk();
+        checker = getHTTPRep();
+        RepositoryResult<Statement>  resultBeforeDelete = checker.resultStatement;
+        checker = addHTTPRep();
         assertThat("AddHTTPRepo is Match: ", checker.testCheck, equalTo(true));
+        checker = deleteHTTPRep( resultBeforeDelete);
+        assertThat("deleteHTTPRepo is Match: ", checker.testCheck, equalTo(true));
     }
 }
