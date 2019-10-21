@@ -64,7 +64,7 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
     RDFFormat dataFormat = Rio.getParserFormatForFileName(file).orElse(RDFFormat.RDFXML);
 
     String repId;
-    Repository repository;
+    Repository      repository;
     RepositoryConnection repositoryCon;
     Model modelBeforeDelete;
 
