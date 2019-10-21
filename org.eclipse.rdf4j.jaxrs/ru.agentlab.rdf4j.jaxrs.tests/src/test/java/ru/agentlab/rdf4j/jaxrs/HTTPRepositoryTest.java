@@ -62,7 +62,6 @@ public class HTTPRepositoryTest {
         return checker;
     }
 
-
     @Test
     public void HTTPRepositoryShouldWorkOk(){
         Checker checker ;
