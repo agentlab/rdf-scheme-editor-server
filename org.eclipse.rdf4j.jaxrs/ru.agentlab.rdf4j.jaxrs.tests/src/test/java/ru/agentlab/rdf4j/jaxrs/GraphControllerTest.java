@@ -98,7 +98,7 @@ import static org.junit.Assert.assertNotNull;
         Response responseFromGetSecond = clientForSecondGraph.get();
         String bodySecond = responseFromGetSecond.readEntity(String.class);
         System.out.println("BODY FROM SECOND GET:\n" + bodySecond);
-        Reader readerSecond = new StringReader(bodyFirst);
+        Reader readerSecond = new StringReader(bodySecond);
         Model modelFromGetOnSecondGraph = Rio.parse(readerSecond, "", RDFFormat.TURTLE);
         InputStream inputStreamForSecondFile = RepositoryControllerTest.class.getResourceAsStream(firstTTL);
         Model modelFromSecondFile = Rio.parse(inputStreamForSecondFile, "", dataFormat);
@@ -118,11 +118,11 @@ import static org.junit.Assert.assertNotNull;
 */
 
         //Тут удаляем один граф и проверяем, не пропадают ли триплы из других графов
-        System.out.println("DELETE \"" + graphNameFirst + "\" from repository\"" + repId + "\" on address=" + address);
-        clientForFirstGraph = WebClient.create(address);
+        System.out.println("DELETE \"" + graphNameFirst + "\" from repository\"" + repId + "\" on address=" + address + graphNameFirst);
+        clientForFirstGraph = WebClient.create(address + graphNameFirst);
         clientForFirstGraph.accept(new MediaType("text", "turtle"));
         Response response3 = clientForFirstGraph.delete();
-        assertThat("repositoryCon.size", repositoryCon.size(), equalTo(0L));
+        assertThat("repositoryCon.size", repositoryCon.size(), equalTo(2L)); //Из 6 записей удаляем 4 согласно firstTTL
         System.out.println("response.status=" + response3.getStatusInfo().getReasonPhrase());
         System.out.println("response.body=" + response3.readEntity(String.class));
         //Удалили трипл из первого графа, проверяем, что второй в сохранности
