@@ -2,6 +2,8 @@ package ru.agentlab.rdf4j.jaxrs;
 
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.query.*;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
@@ -13,10 +15,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.io.StringReader;
+import javax.jws.WebParam;
+import javax.swing.text.html.parser.Entity;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static org.eclipse.rdf4j.model.util.Models.isSubset;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -30,6 +34,7 @@ public class HTTPRepositoryTest {
     RepositoryConnection repcon;
     private class Checker{
         String requestAnswer;
+        int size;
         boolean testCheck;
         RepositoryResult<Statement> resultStatement;
     }
@@ -62,52 +67,85 @@ public class HTTPRepositoryTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        String gotResult=null;
         repcon.add(model);
-        RepositoryResult<Statement> result = repcon.getStatements(null,null,null);
-        while (result.hasNext()){
-            System.out.println("statement " + result.next());
-            gotResult = "" + result.next();
-        };
 
-//        При парсинге выдает ошибку
-//        ru.agentlab.rdf4j.jaxrs.HTTPRepositoryTest
+        Checker gotChecker = new Checker();
+        gotChecker = getHTTPRep();
+        RepositoryResult<Statement> result2 = gotChecker.resultStatement;
+        Model newModel = QueryResults.asModel(result2);
 
-
-//        Reader reader = new StringReader(gotResult);
-//        Model newModel = null;
-//        try {
-//            newModel= Rio.parse(reader, "", RDFFormat.TURTLE);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//        checker.testCheck = isSubset(model,newModel);
-
-        checker.testCheck = true;
+        checker.testCheck = isSubset(model,newModel);
         return checker;
     }
 
     public Checker deleteHTTPRep( RepositoryResult<Statement> beforeDelete){
+        Model modelBeforeDelete = QueryResults.asModel(beforeDelete);
         Checker checker = new Checker();
         repcon.clear(null, null,null);
-        String gotString = null;
-        String strBeforeDelete = null;
-        RepositoryResult<Statement> result = repcon.getStatements(null,null, null);
-        while (result.hasNext()){
-            System.out.println("statement1 " + result.next());
-            gotString = "" + result.next();
+
+        Checker gotChecker = new Checker();
+        gotChecker = getHTTPRep();
+        RepositoryResult<Statement> result = gotChecker.resultStatement ;
+        Model modelAfterDelete = QueryResults.asModel(result);
+
+        checker.testCheck = modelAfterDelete.equals(modelBeforeDelete);
+        return checker;
+    }
+
+    public Checker sparqlSelect(){
+        Checker checker = new Checker();
+        InputStream inputStream = HTTPRepositoryTest.class.getResourceAsStream(file);
+        Model modelFromFile = null;
+        try {
+            modelFromFile = Rio.parse(inputStream,"", RDFFormat.TURTLE);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-//        System.out.println(gotString);
 
-        while (beforeDelete.hasNext()){
-            strBeforeDelete = "" + beforeDelete;
+        String queryString = "SELECT ?x ?p ?y WHERE { ?x ?p ?y } ";
+        String selectedStr =  "# Default graph" +
+                "@prefix dc: <http://purl.org/dc/elements/1.1/> .\n" +
+                "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n";
+        TupleQuery tupleQuery = repcon.prepareTupleQuery(QueryLanguage.SPARQL, queryString);
+        try (TupleQueryResult result = tupleQuery.evaluate()) {
+            while (result.hasNext()) {
+                BindingSet bindingSet = result.next();
+                Value valueOfX = bindingSet.getValue("x");
+                Value valueOfP = bindingSet.getValue("p");
+                Value valueOfY = bindingSet.getValue("y");
+                selectedStr= selectedStr + "<" + valueOfX + "> " + "<" + valueOfP + "> "
+                        + valueOfY + " ."+ "\n";
+            }
         }
-//        System.out.println(strBeforeDelete);
 
+        Reader reader = new StringReader(selectedStr);
+        Model modelFromSelect = null;
+        try {
+             modelFromSelect = Rio.parse(reader, "", RDFFormat.TURTLE);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-//        checker.testCheck = gotString.equals(strBeforeDelete);
-//        checker.testCheck = true;
-        checker.testCheck =(gotString == null);
+        checker.testCheck = modelFromSelect.equals(modelFromFile);
+        return checker;
+    }
+
+    public Checker sparqlUpdate() {
+        Checker checker = new Checker();
+        String queryString = "DELETE ?x ?p \"Bob\"\n";
+        queryString += "INSERT <urn:x-local:graph1> dc:publisher \"Bob23\"\n";
+        queryString += "WHERE {?x ?p \"Bob\"}";
+        TupleQuery tupleQuery =repcon.prepareTupleQuery(QueryLanguage.SPARQL,queryString);
+
+        String strShouldBe = "(urn:x-local:graph1, http://purl.org/dc/elements/1.1/publisher, \"Bob23\") [null]";
+
+        checker = getHTTPRep();
+        RepositoryResult<Statement> afterUpdate = checker.resultStatement;
+        while (afterUpdate.hasNext()){
+            if((afterUpdate + "") == strShouldBe){
+                checker.testCheck = true;
+            }
+        }
         return checker;
     }
 
@@ -115,10 +153,21 @@ public class HTTPRepositoryTest {
     public void HTTPRepositoryShouldWorkOk(){
         Checker checker ;
         checker = getHTTPRep();
-        RepositoryResult<Statement>  resultBeforeDelete = checker.resultStatement;
+        RepositoryResult<Statement>  emptyResult = checker.resultStatement;
+
         checker = addHTTPRep();
         assertThat("AddHTTPRepo is Match: ", checker.testCheck, equalTo(true));
-        checker = deleteHTTPRep( resultBeforeDelete);
+
+        checker= sparqlSelect();
         assertThat("deleteHTTPRepo is Match: ", checker.testCheck, equalTo(true));
+
+//        checker = sparqlUpdate();
+//        assertThat("deleteHTTPRepo is Match: ", checker.testCheck, equalTo(true));
+
+        checker = deleteHTTPRep(emptyResult);
+        assertThat("deleteHTTPRepo is Match: ", checker.testCheck, equalTo(true));
+//        assertThat("deleteHTTPRepo length is zero: ", checker.size, equalTo(0));
+
     }
+
 }
