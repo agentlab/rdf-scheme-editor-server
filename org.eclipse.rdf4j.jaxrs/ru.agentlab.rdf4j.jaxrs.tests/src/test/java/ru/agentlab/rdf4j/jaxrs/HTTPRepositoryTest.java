@@ -137,14 +137,19 @@ public class HTTPRepositoryTest {
         TupleQuery tupleQuery =repcon.prepareTupleQuery(QueryLanguage.SPARQL,queryString);
 
         String strShouldBe = "(urn:x-local:graph1, http://purl.org/dc/elements/1.1/publisher, \"Bob23\") [null]";
-
+        Reader reader = new StringReader(strShouldBe);
+        Model modelInserted = null;
+        try {
+           modelInserted = Rio.parse(reader, "", RDFFormat.RDFXML);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         checker = getHTTPRep();
         RepositoryResult<Statement> afterUpdate = checker.resultStatement;
-        while (afterUpdate.hasNext()){
-            if((afterUpdate + "") == strShouldBe){
-                checker.testCheck = true;
-            }
-        }
+        Model modelAfterUpdate = QueryResults.asModel(afterUpdate);
+
+        System.out.println("" + modelAfterUpdate);
+        checker.testCheck = isSubset(modelInserted, modelAfterUpdate);
         return checker;
     }
 
@@ -159,14 +164,12 @@ public class HTTPRepositoryTest {
 
         checker= sparqlSelect();
         assertThat("deleteHTTPRepo is Match: ", checker.testCheck, equalTo(true));
-
+//
 //        checker = sparqlUpdate();
 //        assertThat("deleteHTTPRepo is Match: ", checker.testCheck, equalTo(true));
 
         checker = deleteHTTPRep(emptyResult);
         assertThat("deleteHTTPRepo is Match: ", checker.testCheck, equalTo(true));
-//        assertThat("deleteHTTPRepo length is zero: ", checker.size, equalTo(0));
-
     }
 
 }
