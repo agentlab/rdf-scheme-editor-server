@@ -125,7 +125,6 @@ public class HTTPRepositoryTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         checker.testCheck = modelFromSelect.equals(modelFromFile);
         return checker;
     }
