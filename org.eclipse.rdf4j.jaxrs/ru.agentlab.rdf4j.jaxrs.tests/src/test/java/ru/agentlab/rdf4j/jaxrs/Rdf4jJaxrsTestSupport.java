@@ -18,6 +18,7 @@ import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
+import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
 import org.ops4j.pax.exam.karaf.options.LogLevelOption;
 import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 import org.osgi.framework.Constants;
@@ -40,7 +41,7 @@ public class Rdf4jJaxrsTestSupport extends KarafTestSupport {
 
         return new Option[] {
             // uncomment if you need to debug (blocks test execution and waits for the debugger)
-            // KarafDistributionOption.debugConfiguration("5005", true),
+            //KarafDistributionOption.debugConfiguration("5005", true),
             karafDistributionConfiguration().frameworkUrl(karafUrl).name("Apache Karaf").unpackDirectory(new File("target/exam")),
             // enable JMX RBAC security, thanks to the KarafMBeanServerBuilder
             configureSecurity().disableKarafMBeanServerBuilder(),

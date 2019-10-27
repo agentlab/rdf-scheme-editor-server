@@ -7,7 +7,6 @@ import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.DELETE;
@@ -38,9 +37,6 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
-
 import ru.agentlab.rdf4j.jaxrs.ProtocolUtil;
 import ru.agentlab.rdf4j.jaxrs.repository.ProtocolUtils;
 import ru.agentlab.rdf4j.jaxrs.sparql.providers.StatementsResultModel;
@@ -55,16 +51,10 @@ public class GraphController {
     @Reference
     private RepositoryManagerComponent repositoryManager;
 
-    public GraphController() {
-        System.out.println("Started");
-    }
-
     @GET
     @Path("/repositories/{repId}/rdf-graphs/{graphName}")
     public StatementsResultModel getGraph(@Context HttpServletRequest request, @PathParam("repId") String repId, @PathParam("graphName") String graphName) throws IOException {
-        System.out.println("GET.Name activated");
-        System.out.println("repId = " + repId);
-        System.out.println("graphName = " + graphName);
+        logger.info("GET data to graph, repId = {}, graphName = {}", repId, graphName);
 
         final Repository repository = repositoryManager.getRepository(repId);
         if (repository == null)
@@ -108,26 +98,11 @@ public class GraphController {
         }
     }
 
-    public static String getFileContentAsString(String bodyName) {
-        // for future used
-        String content = "";
-        try {
-            URL fileURL = GraphController.class.getResource(bodyName);
-            content = Resources.toString(fileURL, Charsets.UTF_8);
-        } catch (IOException ex) {
-            System.out.println("Error getting turle file");
-            ex.printStackTrace();
-        }
-        return content;
-    }
-
     @POST
     @Path("/repositories/{repId}/rdf-graphs/{graphName}")
     public void postGraphStatements(@Context HttpServletRequest request,
             @PathParam("repId") String repId, @PathParam("graphName") String graphName) throws IOException {
-        logger.info("POST data to graph");
-        System.out.println("repId = " + repId);
-        System.out.println("graphName = " + graphName);
+        logger.info("POST data to graph, repId = {}, graphName = {}", repId, graphName);
 
         Repository repository = repositoryManager.getRepository(repId);
         if (repository == null)
@@ -141,16 +116,14 @@ public class GraphController {
     @Path("/repositories/{repId}/rdf-graphs/{graphName}")
     public void putGraphStatements(@Context HttpServletRequest request,
             @PathParam("repId") String repId, @PathParam("graphName") String graphName) throws IOException {
-        logger.info("POST data to graph");
-        System.out.println("repId = " + repId);
-        System.out.println("graphName = " + graphName);
+        logger.info("PUT data to graph, repId = {}, graphName = {}", repId, graphName);
 
         Repository repository = repositoryManager.getRepository(repId);
         if (repository == null)
             throw new WebApplicationException("Repository with id=" + repId + " not found", NOT_FOUND);
         
         getAddDataResult(repository, request, true);
-        logger.info("POST data request finished.");
+        logger.info("PUT data request finished.");
     }
     
     /**
