@@ -41,7 +41,7 @@ public class RepositoryControllerTest extends Rdf4jJaxrsTestSupport {
 
     @Inject
     protected RepositoryManagerComponent manager;
-    
+
     @Before
     public void init() throws Exception {
         ENDPOINT_ADDRESS = "http://localhost:" + getHttpPort() + "/rdf4j-server/repositories/";
