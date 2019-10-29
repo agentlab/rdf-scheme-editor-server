@@ -1,6 +1,4 @@
 package ru.agentlab.rdf4j.jaxrs;
-
-import com.sun.istack.NotNull;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Statement;
@@ -23,7 +21,6 @@ import org.ops4j.pax.exam.spi.reactors.PerClass;
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
 import javax.inject.Inject;
-import javax.jws.WebParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.*;
@@ -115,7 +112,6 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
             e.printStackTrace();
         }
         try {
-
             repcon.add(HTTPRepositoryTest.class.getResource(file), "", dataFormat);
         } catch (IOException e) {
             e.printStackTrace();
