@@ -63,10 +63,10 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
 
     @Before
     public void init() throws Exception {
-//        repositoryID = "1234568";
-        repositoryID = "rashid";
-//        repository = manager.getOrCreateRepository(repositoryID, "native", null);
-//        rdf4jServer = "http://localhost:" + getHttpPort() + "/rdf4j-server/";
+        repositoryID = "1234568";
+//        repositoryID = "rashid";
+        repository = manager.getOrCreateRepository(repositoryID, "native", null);
+        rdf4jServer = "http://localhost:" + getHttpPort() + "/rdf4j-server/";
         rdf4jServer = "https://agentlab.ru" + "/rdf4j-server/";
         address = rdf4jServer + "repositories/" + repositoryID + "/statements";
         rep = new HTTPRepository(rdf4jServer, repositoryID);
@@ -77,7 +77,7 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
     @After
     public void cleanup() {
         repcon.close();
-//        repository.shutDown();
+        repository.shutDown();
         manager.removeRepository(repositoryID);
     }
 
