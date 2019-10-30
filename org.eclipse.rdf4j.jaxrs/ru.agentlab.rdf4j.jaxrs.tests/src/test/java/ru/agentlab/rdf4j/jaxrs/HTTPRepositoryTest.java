@@ -67,7 +67,7 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
 //        repositoryID = "rashid";
         repository = manager.getOrCreateRepository(repositoryID, "native", null);
         rdf4jServer = "http://localhost:" + getHttpPort() + "/rdf4j-server/";
-        rdf4jServer = "https://agentlab.ru" + "/rdf4j-server/";
+        //rdf4jServer = "https://agentlab.ru" + "/rdf4j-server/";
         address = rdf4jServer + "repositories/" + repositoryID + "/statements";
         rep = new HTTPRepository(rdf4jServer, repositoryID);
         repcon = rep.getConnection();

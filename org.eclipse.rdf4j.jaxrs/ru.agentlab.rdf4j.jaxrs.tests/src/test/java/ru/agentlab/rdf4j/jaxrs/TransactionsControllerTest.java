@@ -72,7 +72,7 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport {
         client.type(dataFormat.getDefaultMIMEType());
         client.accept(MediaType.WILDCARD);
         Response response = client.post(null);
-        assertEquals(204, response.getStatus());
+        assertEquals(201, response.getStatus());
         client.close();
         
         return response.getHeaderString("Location");

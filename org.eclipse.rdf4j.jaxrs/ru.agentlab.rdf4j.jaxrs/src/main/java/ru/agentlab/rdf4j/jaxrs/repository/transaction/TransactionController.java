@@ -2,6 +2,7 @@ package ru.agentlab.rdf4j.jaxrs.repository.transaction;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.SERVICE_UNAVAILABLE;
@@ -19,10 +20,8 @@ import static org.eclipse.rdf4j.http.protocol.Protocol.REMOVE_GRAPH_PARAM_NAME;
 import static org.eclipse.rdf4j.http.protocol.Protocol.SUBJECT_PARAM_NAME;
 import static org.eclipse.rdf4j.http.protocol.Protocol.USING_GRAPH_PARAM_NAME;
 import static org.eclipse.rdf4j.http.protocol.Protocol.USING_NAMED_GRAPH_PARAM_NAME;
-import static org.eclipse.rdf4j.http.protocol.Protocol.Action.QUERY;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -63,15 +63,10 @@ import org.eclipse.rdf4j.query.UnsupportedQueryLanguageException;
 import org.eclipse.rdf4j.query.UpdateExecutionException;
 import org.eclipse.rdf4j.query.impl.SimpleDataset;
 import org.eclipse.rdf4j.repository.Repository;
-import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFWriterFactory;
-import org.eclipse.rdf4j.rio.RDFWriterRegistry;
 import org.eclipse.rdf4j.rio.Rio;
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,6 +84,34 @@ public class TransactionController {
 
     @Reference
     private RepositoryManagerComponent repositoryManager;
+    
+    @GET
+    @Path("/repositories/{repId}/transactions/{txnId}")
+    public Object pingTransaction(@Context HttpServletRequest request, @Context HttpServletResponse response, @PathParam("repId") String repId, @PathParam("txnId") String txnId) {
+        UUID transactionId = getTransactionID(txnId);
+        logger.debug("transaction id: {}", transactionId);
+        logger.debug("request content type: {}", request.getContentType());
+        
+        Transaction transaction = ActiveTransactionRegistry.INSTANCE.getTransaction(transactionId);
+
+        if (transaction == null) {
+            logger.warn("could not find transaction for transaction id {}", transactionId);
+            throw new WebApplicationException("unable to find registered transaction for transaction id '" + transactionId + "'", BAD_REQUEST);
+        }
+
+        final String actionParam = request.getParameter(Protocol.ACTION_PARAM_NAME);
+        final Action action = actionParam != null ? Action.valueOf(actionParam) : Action.ROLLBACK;
+        Object result;
+        switch (action) {
+        case PING:
+            result = Long.toString(ActiveTransactionRegistry.INSTANCE.getTimeout(TimeUnit.MILLISECONDS));
+            break;
+        default:
+            throw new WebApplicationException("GET Method not allowed", METHOD_NOT_ALLOWED);
+        }
+        ActiveTransactionRegistry.INSTANCE.active(transaction);
+        return result;
+    }
 
     @PUT
     @Path("/repositories/{repId}/transactions/{txnId}")
@@ -299,7 +322,7 @@ public class TransactionController {
                 logger.warn("transaction modification action '{}' not recognized", action);
                 throw new WebApplicationException("modification action not recognized: " + action);
             }
-            return Response.noContent().build();
+            return Response.ok().build();
         } catch (Exception e) {
             if (e instanceof WebApplicationException) {
                 throw (WebApplicationException) e;

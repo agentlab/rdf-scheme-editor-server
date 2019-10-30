@@ -3,16 +3,17 @@ package ru.agentlab.rdf4j.jaxrs.repository.transaction;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
+import java.net.URI;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
 
 import org.eclipse.rdf4j.IsolationLevel;
 import org.eclipse.rdf4j.IsolationLevels;
@@ -39,7 +40,7 @@ public class TransactionStartController {
    
     @POST
     @Path("/repositories/{repId}/transactions")
-    public void handleRequestInternal(@Context HttpServletRequest request, @Context HttpServletResponse response, 
+    public Response handleRequestInternal(@Context HttpServletRequest request,
                                       @PathParam("repId") String repId) throws Exception {
         logger.info("POST transaction start");
         Repository repository = repositoryManager.getRepository(repId);
@@ -51,9 +52,8 @@ public class TransactionStartController {
             throw new WebApplicationException("Transaction start error for repository with id=" + repId, INTERNAL_SERVER_ERROR);
         logger.info("transaction started");
         
-        final StringBuffer txnURL = request.getRequestURL();
-        txnURL.append("/rdf4j-server/repositories/" + repId + "/transactions/" + txnId.toString());
-        response.setHeader("Location", txnURL.toString());
+        String txnIdStr = "/rdf4j-server/repositories/" + repId + "/transactions/" + txnId.toString();
+        return Response.created(URI.create(txnIdStr)).build();
     }
     
     private UUID startTransaction(Repository repository, HttpServletRequest request)  throws WebApplicationException {  

@@ -274,7 +274,7 @@ public class RepositoryController {
     @Consumes(Protocol.FORM_MIME_TYPE)
     public TupleQueryResultModel createSparqlForm(@Context UriInfo uriInfo,
             @PathParam("repId") String repId,
-            @FormParam("update") String queryStr,
+            @FormParam("query") String queryStr,
             @FormParam("queryLn") String queryLnStr,
             @FormParam("baseURI") String baseURI,
             @FormParam("infer") @DefaultValue("true") boolean includeInferred,
