@@ -1,8 +1,9 @@
 package ru.agentlab.rdf4j.jaxrs;
+import com.github.jsonldjava.core.Context;
+import com.github.jsonldjava.core.RDFDataset;
+import com.sun.org.apache.xerces.internal.util.URI;
 import org.apache.cxf.jaxrs.client.WebClient;
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.query.*;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -25,6 +26,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.*;
 
+
 import static org.eclipse.rdf4j.model.util.Models.isSubset;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -46,6 +48,9 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
     String rdf4jServer;
     String repositoryID;
     String address;
+    Resource [] context = new Resource[] {};
+    ValueFactory f;
+
     RDFFormat dataFormat = Rio.getParserFormatForFileName(file).orElse(RDFFormat.RDFXML);
 
     private class Checker{
@@ -58,12 +63,15 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
 
     @Before
     public void init() throws Exception {
-        repositoryID = "1234568";
+//        repositoryID = "1234568";
+        repositoryID = "rashid";
         repository = manager.getOrCreateRepository(repositoryID, "native", null);
-        rdf4jServer = "http://localhost:" + getHttpPort() + "/rdf4j-server/";
+//        rdf4jServer = "http://localhost:" + getHttpPort() + "/rdf4j-server/";
+        rdf4jServer = "https://agentlab.ru" + "/rdf4j-server/";
         address = rdf4jServer + "repositories/" + repositoryID + "/statements";
         rep = new HTTPRepository(rdf4jServer, repositoryID);
         repcon = rep.getConnection();
+        f = repcon.getValueFactory();
     }
 
     @After
@@ -112,7 +120,7 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
             e.printStackTrace();
         }
         try {
-            repcon.add(HTTPRepositoryTest.class.getResource(file), "", dataFormat);
+            repcon.add(HTTPRepositoryTest.class.getResource(file), "", dataFormat, context);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -127,7 +135,7 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
     public Checker deleteHTTPRep(Model modelBeforeDelete){
         System.out.println("modelBeforeDelete: " + modelBeforeDelete);
         Checker checker = new Checker();
-        repcon.clear();
+        repcon.clear(context);
 
         Checker gotChecker;
         gotChecker = getHTTPRep();
@@ -151,10 +159,6 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
         String selectedStr =  "# Default graph" +
                 "@prefix dc: <http://purl.org/dc/elements/1.1/> .\n" +
                 "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n";
-
-        //не могу понять почему, но если в SPARQLRespository передавать ту же строку
-        // (только если её заранее проинициализировать выше),
-        // то он ругается
 
         Repository repo = new SPARQLRepository(rdf4jServer + "repositories/" + repositoryID);
         repo.init();
@@ -188,13 +192,18 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
         repo.init();
         repcon = repo.getConnection();
 
-        String queryString = "@prefix dc: <http://purl.org/dc/elements/1.1/> .\n" +
-                                "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .";
-        queryString += "DELETE {?x ?p \"Bob\" .} \n";
-//        queryString += "INSERT <urn:x-local:graph1> dc:publisher \"Bob23\"\n";
-        queryString += "WHERE {?x ?p \"Bob\"}";
+        String queryString ="DELETE { <urn:x-local:graph1>\n"+
+                "<http://purl.org/dc/terms/publisher>\n" +
+                "\"Bob\"}\n" +
+                "INSERT {<urn:x-local:graph1>\n" +
+                "<http://purl.org/dc/terms/publisher>\n" +
+                "\"Bob23\"\n" +
+                "}\n" +
+                "\n" +
+                "WHERE { \n" +
+                "  <urn:x-local:graph1> <http://purl.org/dc/elements/1.1/publisher> \"Bob\" .\n" +
+                "}";
         TupleQuery tupleQuery =repcon.prepareTupleQuery(QueryLanguage.SPARQL,queryString);
-
 //(        String strShouldBe = "# Default graph\n" +
 //                "@prefix dc: <http://purl.org/dc/elements/1.1/> .\n" +
 //                "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n" +
@@ -226,11 +235,11 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
 
         checker= sparqlSelect();
         assertThat("deleteHTTPRepo is Match: ", checker.testCheck, equalTo(true));
-
-        checker = sparqlUpdate();
-        assertThat("deleteHTTPRepo is Match: ", checker.testCheck, equalTo(true));
 //
-//        checker = deleteHTTPRep(resultBeforeDelete);
+//        checker = sparqlUpdate();
 //        assertThat("deleteHTTPRepo is Match: ", checker.testCheck, equalTo(true));
+
+        checker = deleteHTTPRep(resultBeforeDelete);
+        assertThat("deleteHTTPRepo is Match: ", checker.testCheck, equalTo(true));
     }
 }
