@@ -19,6 +19,7 @@ import java.io.InputStream;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -266,6 +267,97 @@ public class RepositoryController {
 			throw new WebApplicationException("Missing parameter: "+Protocol.QUERY_PARAM_NAME, BAD_REQUEST);
 		}
 	}
+	
+	@POST
+    @Path("/repositories/{repId}")
+    @Produces({ "application/json", "application/sparql-results+json" })
+    @Consumes(Protocol.FORM_MIME_TYPE)
+    public TupleQueryResultModel createSparqlForm(@Context UriInfo uriInfo,
+            @PathParam("repId") String repId,
+            @FormParam("update") String queryStr,
+            @FormParam("queryLn") String queryLnStr,
+            @FormParam("baseURI") String baseURI,
+            @FormParam("infer") @DefaultValue("true") boolean includeInferred,
+            @FormParam("timeout") int maxQueryTime,
+            @FormParam("distinct") @DefaultValue("false") boolean distinct,
+            @FormParam("limit") @DefaultValue("0") long limit,
+            @FormParam("offset") @DefaultValue("0") long offset) throws WebApplicationException, HTTPException, IOException {
+        Repository repository = repositoryManager.getRepository(repId);
+        if(repository == null)
+            throw new WebApplicationException("Repository with id=" + repId + " not found", NOT_FOUND);
+
+        int qryCode = 0;
+        if (logger.isInfoEnabled() || logger.isDebugEnabled()) {
+            qryCode = String.valueOf(queryStr).hashCode();
+        }
+        boolean headersOnly = false;
+        logger.info("POST query {}", qryCode);
+        logger.info("query {} = {}", qryCode, queryStr);
+
+        if (queryStr != null) {
+            RepositoryConnection repositoryCon = ProtocolUtils.getRepositoryConnection(repository);
+            if(repositoryCon == null)
+                throw new WebApplicationException("Cannot connect to repository with id="+repId, INTERNAL_SERVER_ERROR);
+            try {
+                Query query = getQuery(repository, repositoryCon,
+                        queryStr, queryLnStr, baseURI, includeInferred, maxQueryTime);
+
+                Object queryResult = null;
+                //FileFormatServiceRegistry<? extends FileFormat, ?> registry;
+
+                try {
+                    if (query instanceof TupleQuery) {
+                        if (!headersOnly) {
+                            TupleQuery tQuery = (TupleQuery) query;
+                            final TupleQueryResult tqr = distinct ? QueryResults.distinctResults(tQuery.evaluate())
+                                    : tQuery.evaluate();
+                            queryResult = QueryResults.limitResults(tqr, limit, offset);
+                        }
+                        //registry = TupleQueryResultWriterRegistry.getInstance();
+                    } else if (query instanceof GraphQuery) {
+                        if (!headersOnly) {
+                            GraphQuery gQuery = (GraphQuery) query;
+                            final GraphQueryResult qqr = distinct ? QueryResults.distinctResults(gQuery.evaluate())
+                                    : gQuery.evaluate();
+                            queryResult = QueryResults.limitResults(qqr, limit, offset);
+                        }
+                        //registry = RDFWriterRegistry.getInstance();
+
+                    } else if (query instanceof BooleanQuery) {
+                        BooleanQuery bQuery = (BooleanQuery) query;
+
+                        queryResult = headersOnly ? null : bQuery.evaluate();
+                        //registry = BooleanQueryResultWriterRegistry.getInstance();
+                    } else {
+                        throw new WebApplicationException("Unsupported query type: "+query.getClass().getName(), BAD_REQUEST);
+                    }
+                } catch (QueryInterruptedException e) {
+                    logger.info("Query interrupted", e);
+                    throw new WebApplicationException("Query evaluation took too long", SERVICE_UNAVAILABLE);
+                } catch (QueryEvaluationException e) {
+                    logger.info("Query evaluation error", e);
+                    if (e.getCause() != null && e.getCause() instanceof HTTPException) {
+                        // custom signal from the backend, throw as HTTPException
+                        // directly (see SES-1016).
+                        throw (HTTPException) e.getCause();
+                    } else {
+                        throw new WebApplicationException("Query evaluation error: " + e.getMessage(), INTERNAL_SERVER_ERROR);
+                    }
+                }
+                TupleQueryResultModel queryResultModel = new TupleQueryResultModel();
+                queryResultModel.put("queryResult", queryResult);
+                queryResultModel.put("connection", repositoryCon);
+                return queryResultModel;
+            } catch (Exception e) {
+                // only close the connection when an exception occurs. Otherwise, the QueryResultView will take care of
+                // closing it.
+                repositoryCon.close();
+                throw e;
+            }
+        } else {
+            throw new WebApplicationException("Missing parameter: "+Protocol.QUERY_PARAM_NAME, BAD_REQUEST);
+        }
+    }
 
 	private Query getQuery(Repository repository, RepositoryConnection repositoryCon,
 			String queryStr, String queryLnStr, String baseURI, boolean includeInferred, int maxQueryTime
