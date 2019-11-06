@@ -43,6 +43,8 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
 
     String file =  "/testcases/default-graph-1.ttl";
     Repository repository;
+    Repository repo;
+    RepositoryConnection repocon;
     Repository rep;
     RepositoryConnection repcon;
     String rdf4jServer;
@@ -63,15 +65,19 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
 
     @Before
     public void init() throws Exception {
-        repositoryID = "1234568";
+        repositoryID = "12345648";
 //        repositoryID = "rashid";
-        repository = manager.getOrCreateRepository(repositoryID, "native", null);
+        repository = manager.getOrCreateRepository(repositoryID, "memory", null);
         rdf4jServer = "http://localhost:" + getHttpPort() + "/rdf4j-server/";
-        //rdf4jServer = "https://agentlab.ru" + "/rdf4j-server/";
+//        rdf4jServer = "https://agentlab.ru" + "/rdf4j-server/";
         address = rdf4jServer + "repositories/" + repositoryID + "/statements";
         rep = new HTTPRepository(rdf4jServer, repositoryID);
         repcon = rep.getConnection();
         f = repcon.getValueFactory();
+        repo = new SPARQLRepository(rdf4jServer + "repositories/" + repositoryID);
+        repo.init();
+        repocon = repo.getConnection();
+
     }
 
     @After
@@ -160,10 +166,7 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
                 "@prefix dc: <http://purl.org/dc/elements/1.1/> .\n" +
                 "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n";
 
-        Repository repo = new SPARQLRepository(rdf4jServer + "repositories/" + repositoryID);
-        repo.init();
-        repcon = repo.getConnection();
-        TupleQuery tupleQuery = repcon.prepareTupleQuery(QueryLanguage.SPARQL, queryString);
+        TupleQuery tupleQuery = repocon.prepareTupleQuery(QueryLanguage.SPARQL, queryString);
         try (TupleQueryResult result = tupleQuery.evaluate()) {
             while (result.hasNext()) {
                 BindingSet bindingSet = result.next();
@@ -188,40 +191,50 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
 
     public Checker sparqlUpdate() {
         Checker checker;
-        Repository repo = new SPARQLRepository(rdf4jServer + "repositories/" + repositoryID);
-        repo.init();
-        repcon = repo.getConnection();
+//        String queryString ="DELETE { <urn:x-local:graph1>"
+//                            +"<http://purl.org/dc/elements/1.1/publisher>"
+//                            +"\"Bob\"} \n"
+//                            +"INSERT {<urn:x-local:graph1>"
+//                            +"<http://purl.org/dc/elements/1.1/publisher>"
+//                            +"\"Bob56\""
+//                            +"}\n"
+//                            +"WHERE {"
+//                            +"<urn:x-local:graph1> <http://purl.org/dc/elements/1.1/publisher> \"Bob\" ."
+//                            +"}";
+        String queryString = "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n";
+        queryString += "DELETE {?s ?p \"Bob\"}\n";
+        queryString += "INSERT {<urn:x-local:graph1> <http://purl.org/dc/elements/1.1/publisher> \"Bob63\"}\n";
+        queryString += "WHERE {?s ?p ?o .}";
 
-        String queryString ="DELETE { <urn:x-local:graph1>\n"+
-                "<http://purl.org/dc/terms/publisher>\n" +
-                "\"Bob\"}\n" +
-                "INSERT {<urn:x-local:graph1>\n" +
-                "<http://purl.org/dc/terms/publisher>\n" +
-                "\"Bob23\"\n" +
-                "}\n" +
-                "\n" +
-                "WHERE { \n" +
-                "  <urn:x-local:graph1> <http://purl.org/dc/elements/1.1/publisher> \"Bob\" .\n" +
-                "}";
-        TupleQuery tupleQuery =repcon.prepareTupleQuery(QueryLanguage.SPARQL,queryString);
-//(        String strShouldBe = "# Default graph\n" +
-//                "@prefix dc: <http://purl.org/dc/elements/1.1/> .\n" +
-//                "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n" +
-//                "\n" +
-//                "<urn:x-local:graph1> dc:publisher \"Bob23\" .";
-//        Reader reader = new StringReader(strShouldBe);
-//        Model modelInserted = null;
-//        try {
-//           modelInserted = Rio.parse(reader, "", RDFFormat.RDFXML);
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        })
+        Update tupleQuery =repcon.prepareUpdate(QueryLanguage.SPARQL,queryString);
+        tupleQuery.execute();
+        String strShouldBe = "<urn:x-local:graph1>"
+                +"<http://purl.org/dc/elements/1.1/publisher>"
+                +"\"Bob63\" .";
+        String nonBe = "<urn:x-local:graph1>"
+                +"<http://purl.org/dc/elements/1.1/publisher>"
+                +"\"Bob\" .";
+        Reader readerBe = new StringReader(strShouldBe);
+        Model modelInserted = null;
+        try {
+           modelInserted = Rio.parse(readerBe, "", RDFFormat.TURTLE);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Reader readerNon =new StringReader(nonBe);
+        Model modelDeleted = null;
+        try {
+            modelDeleted = Rio.parse(readerNon, "", RDFFormat.TURTLE);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         checker = getHTTPRep();
         Model modelAfterUpdate = checker.model;
 
         System.out.println("update: " + modelAfterUpdate);
-//
-        checker.testCheck = true;
+
+
+        checker.testCheck = (isSubset(modelInserted,modelAfterUpdate)& !isSubset(modelDeleted,modelAfterUpdate));
         return checker;
     }
 
@@ -232,14 +245,14 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
         Model resultBeforeDelete = checker.model;
         checker = addHTTPRep();
         assertThat("AddHTTPRepo is Match: ", checker.testCheck, equalTo(true));
-//
-//        checker= sparqlSelect();
-//        assertThat("deleteHTTPRepo is Match: ", checker.testCheck, equalTo(true));
-//
-//        checker = sparqlUpdate();
-//        assertThat("deleteHTTPRepo is Match: ", checker.testCheck, equalTo(true));
 
-        checker = deleteHTTPRep(resultBeforeDelete);
-        assertThat("deleteHTTPRepo is Match: ", checker.testCheck, equalTo(true));
+        checker= sparqlSelect();
+        assertThat("sparql is Match: ", checker.testCheck, equalTo(true));
+
+        checker = sparqlUpdate();
+        assertThat("update is Match: ", checker.testCheck, equalTo(true));
+
+//        checker = deleteHTTPRep(resultBeforeDelete);
+//        assertThat("deleteHTTPRepo is Match: ", checker.testCheck, equalTo(true));
     }
 }
