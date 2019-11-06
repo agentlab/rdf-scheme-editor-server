@@ -1,13 +1,9 @@
 package ru.agentlab.rdf4j.jaxrs;
-import com.github.jsonldjava.core.Context;
-import com.github.jsonldjava.core.RDFDataset;
-import com.sun.org.apache.xerces.internal.util.URI;
 import org.apache.cxf.jaxrs.client.WebClient;
 import org.eclipse.rdf4j.model.*;
 import org.eclipse.rdf4j.query.*;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.repository.http.HTTPRepository;
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -52,24 +48,19 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
     String address;
     Resource [] context = new Resource[] {};
     ValueFactory f;
+    final String strShouldBe = "<urn:x-local:graph1>"
+            +"<http://purl.org/dc/elements/1.1/publisher>"
+            +"\"Bob63\" .";
 
     RDFFormat dataFormat = Rio.getParserFormatForFileName(file).orElse(RDFFormat.RDFXML);
 
-    private class Checker{
-        String requestAnswer;
-        int size;
-        Model model;
-        boolean testCheck;
-        RepositoryResult<Statement> resultStatement;
-    }
-
     @Before
     public void init() throws Exception {
-        repositoryID = "12345648";
-//        repositoryID = "rashid";
-        repository = manager.getOrCreateRepository(repositoryID, "memory", null);
-        rdf4jServer = "http://localhost:" + getHttpPort() + "/rdf4j-server/";
-//        rdf4jServer = "https://agentlab.ru" + "/rdf4j-server/";
+//        repositoryID = "12345648";
+        repositoryID = "rashid";
+//        repository = manager.getOrCreateRepository(repositoryID, "memory", null);
+//        rdf4jServer = "http://localhost:" + getHttpPort() + "/rdf4j-server/";
+        rdf4jServer = "https://agentlab.ru" + "/rdf4j-server/";
         address = rdf4jServer + "repositories/" + repositoryID + "/statements";
         rep = new HTTPRepository(rdf4jServer, repositoryID);
         repcon = rep.getConnection();
@@ -77,14 +68,13 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
         repo = new SPARQLRepository(rdf4jServer + "repositories/" + repositoryID);
         repo.init();
         repocon = repo.getConnection();
-
     }
 
     @After
     public void cleanup() {
-        repcon.close();
-        repository.shutDown();
-        manager.removeRepository(repositoryID);
+//        repcon.close();
+//        repository.shutDown();
+//        manager.removeRepository(repositoryID);
     }
 
     public WebClient webClientCreator(String myAddress){
@@ -94,78 +84,77 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
         return client;
     }
 
-    public  Checker getHTTPRep(){
-        Checker checker = new Checker();
+    public Model modelCreator(InputStream inputStream,String baseUrl,RDFFormat rdfFormat){
+        Reader reader = new InputStreamReader(inputStream);
+        Model model = null;
+        try {
+            model = Rio.parse(reader,baseUrl,rdfFormat);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return model;
+    }
+
+    public Model modelCreator(String string,String baseUrl,RDFFormat rdfFormat){
+        Reader reader = new StringReader(string);
+        Model model = null;
+        try {
+            model = Rio.parse(reader, baseUrl,rdfFormat);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return model;
+    }
+
+    public Model getStatements(){
         WebClient client2 = webClientCreator(address);
         client2.accept(new MediaType("text", "turtle"));
         Response response2 = client2.get();
         String gotString = response2.readEntity(String.class);
-        assertEquals(200, response2.getStatus());
-        Reader reader = new StringReader(gotString);
-        Model modelFromServer = null;
-        try {
-            modelFromServer = Rio.parse(reader,"", RDFFormat.TURTLE);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        checkerResponseIsOk(response2);
+        Model modelFromServer = modelCreator(gotString,"",RDFFormat.TURTLE);
         client2.close();
-        checker.model = modelFromServer;
-        System.out.println("MODEL FROM SERGER:" + checker.model);
-        return checker;
+        return modelFromServer;
     }
 
-    public Checker addHTTPRep() throws IOException {
-        Checker checker = new Checker();
-        Model model = null;
+    public void checkerResponseIsOk(Response response){
+        assertEquals(200, response.getStatus());
+    }
+
+    public void checkerNotNullAndGreaterThan(InputStream inputStream, Integer integer) throws IOException {
+        assertNotNull(inputStream);
+        assertThat("dataStream.available", inputStream.available(), greaterThan(0));
+    }
+
+    public boolean checkerIsModelSubset(Model model1, Model model2){
+        return isSubset(model1,model2);
+    }
+    public boolean checkerIsFistSustetSeconNot(Model model1, Model model2, Model mainModel){
+        return (isSubset(model1,mainModel)& !isSubset(model2,mainModel));
+    }
+    public boolean checkerIsModelsEquals(Model model1, Model model2){
+        return model1.equals(model2);
+    }
+    public Model addHTTPRep() throws IOException {
         InputStream input = HTTPRepositoryTest.class.getResourceAsStream(file);
-        assertNotNull(input);
-        assertThat("dataStream.available", input.available(), greaterThan(0));
-        try {
-            model = Rio.parse(input, "", Rio.getParserFormatForFileName(file).orElse(RDFFormat.TURTLE));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            repcon.add(HTTPRepositoryTest.class.getResource(file), "", dataFormat, context);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        checkerNotNullAndGreaterThan(input,0);
 
-        Checker gotChecker;
-        gotChecker = getHTTPRep();
-        Model newModel = gotChecker.model;
-        checker.testCheck = isSubset(model,newModel);
-        return checker;
+        Model model = modelCreator(input,"",RDFFormat.TURTLE);
+        repcon.add(HTTPRepositoryTest.class.getResource(file), "", dataFormat, context);
+
+        return model;
     }
 
-    public Checker deleteHTTPRep(Model modelBeforeDelete){
-        System.out.println("modelBeforeDelete: " + modelBeforeDelete);
-        Checker checker = new Checker();
+    public void deleteHTTPRep(){
         repcon.clear(context);
-
-        Checker gotChecker;
-        gotChecker = getHTTPRep();
-        Model modelAfterDelete = gotChecker.model;
-        System.out.println("modelAfterDelete: " + modelAfterDelete);
-        checker.testCheck = modelAfterDelete.equals(modelBeforeDelete);
-        return checker;
     }
 
-    public Checker sparqlSelect(){
-        Checker checker = new Checker();
-        InputStream inputStream = HTTPRepositoryTest.class.getResourceAsStream(file);
-        Model modelFromFile = null;
-        try {
-            modelFromFile = Rio.parse(inputStream,"", RDFFormat.TURTLE);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        String queryString = "SELECT ?x ?p ?y WHERE { ?x ?p ?y } ";
+    public Model sparqlSelect(){
         String selectedStr =  "# Default graph" +
                 "@prefix dc: <http://purl.org/dc/elements/1.1/> .\n" +
                 "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n";
 
+        String queryString = "SELECT ?x ?p ?y WHERE { ?x ?p ?y } ";
         TupleQuery tupleQuery = repocon.prepareTupleQuery(QueryLanguage.SPARQL, queryString);
         try (TupleQueryResult result = tupleQuery.evaluate()) {
             while (result.hasNext()) {
@@ -177,82 +166,59 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
                         + valueOfY + " ."+ "\n";
             }
         }
-
-        Reader reader = new StringReader(selectedStr);
-        Model modelFromSelect = null;
-        try {
-             modelFromSelect = Rio.parse(reader, "", RDFFormat.TURTLE);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        checker.testCheck = modelFromSelect.equals(modelFromFile);
-        return checker;
+        Model modelFromSelect = modelCreator(selectedStr,"",RDFFormat.TURTLE);
+        return modelFromSelect;
     }
 
-    public Checker sparqlUpdate() {
-        Checker checker;
-//        String queryString ="DELETE { <urn:x-local:graph1>"
-//                            +"<http://purl.org/dc/elements/1.1/publisher>"
-//                            +"\"Bob\"} \n"
-//                            +"INSERT {<urn:x-local:graph1>"
-//                            +"<http://purl.org/dc/elements/1.1/publisher>"
-//                            +"\"Bob56\""
-//                            +"}\n"
-//                            +"WHERE {"
-//                            +"<urn:x-local:graph1> <http://purl.org/dc/elements/1.1/publisher> \"Bob\" ."
-//                            +"}";
+    public void sparqlUpdate() {
         String queryString = "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n";
         queryString += "DELETE {?s ?p \"Bob\"}\n";
-        queryString += "INSERT {<urn:x-local:graph1> <http://purl.org/dc/elements/1.1/publisher> \"Bob63\"}\n";
+        queryString += "INSERT {" + strShouldBe + "}\n";
         queryString += "WHERE {?s ?p ?o .}";
 
         Update tupleQuery =repcon.prepareUpdate(QueryLanguage.SPARQL,queryString);
         tupleQuery.execute();
-        String strShouldBe = "<urn:x-local:graph1>"
-                +"<http://purl.org/dc/elements/1.1/publisher>"
-                +"\"Bob63\" .";
-        String nonBe = "<urn:x-local:graph1>"
-                +"<http://purl.org/dc/elements/1.1/publisher>"
-                +"\"Bob\" .";
-        Reader readerBe = new StringReader(strShouldBe);
-        Model modelInserted = null;
-        try {
-           modelInserted = Rio.parse(readerBe, "", RDFFormat.TURTLE);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        Reader readerNon =new StringReader(nonBe);
-        Model modelDeleted = null;
-        try {
-            modelDeleted = Rio.parse(readerNon, "", RDFFormat.TURTLE);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        checker = getHTTPRep();
-        Model modelAfterUpdate = checker.model;
-
-        System.out.println("update: " + modelAfterUpdate);
-
-
-        checker.testCheck = (isSubset(modelInserted,modelAfterUpdate)& !isSubset(modelDeleted,modelAfterUpdate));
-        return checker;
     }
 
     @Test
     public void httpRepositoryShouldWorkOk() throws IOException {
-        Checker checker ;
-        checker = getHTTPRep();
-        Model resultBeforeDelete = checker.model;
-        checker = addHTTPRep();
-        assertThat("AddHTTPRepo is Match: ", checker.testCheck, equalTo(true));
+        Model resultRawRepository = getStatements();
+        assertThat("AddHTTPRepo is Match: ", addHTTPRepChecker(), equalTo(true));
 
-        checker= sparqlSelect();
-        assertThat("sparql is Match: ", checker.testCheck, equalTo(true));
+        assertThat("sparql is Match: ", sparqlSelectChecker(), equalTo(true));
 
-        checker = sparqlUpdate();
-        assertThat("update is Match: ", checker.testCheck, equalTo(true));
+        assertThat("update is Match: ", sparqlUpdateChecker(), equalTo(true));
 
-//        checker = deleteHTTPRep(resultBeforeDelete);
-//        assertThat("deleteHTTPRepo is Match: ", checker.testCheck, equalTo(true));
+        assertThat("deleteHTTPRepo is Match: ", deleteHTTPRepChecker(resultRawRepository), equalTo(true));
     }
+
+    protected boolean addHTTPRepChecker() throws IOException {
+        Model model = addHTTPRep();
+        return checkerIsModelSubset(model,getStatements());
+    }
+
+    protected boolean deleteHTTPRepChecker(Model modelBeforeDelete){
+        deleteHTTPRep();
+        return checkerIsModelsEquals(getStatements(),modelBeforeDelete);
+    }
+
+    protected boolean sparqlSelectChecker(){
+        InputStream inputStream = HTTPRepositoryTest.class.getResourceAsStream(file);
+        return checkerIsModelsEquals(sparqlSelect(),modelCreator(inputStream,"",RDFFormat.TURTLE));
+    }
+
+    protected boolean sparqlUpdateChecker(){
+        sparqlUpdate();
+
+        String nonBe = "<urn:x-local:graph1>"
+                +"<http://purl.org/dc/elements/1.1/publisher>"
+                +"\"Bob\" .";
+        Model modelInserted = modelCreator(strShouldBe, "", RDFFormat.TURTLE);
+        Model modelDeleted = modelCreator(nonBe, "", RDFFormat.TURTLE);
+        Model modelAfterUpdate = getStatements();
+
+        return checkerIsFistSustetSeconNot(modelInserted,modelDeleted,modelAfterUpdate);
+    }
+
+
 }
