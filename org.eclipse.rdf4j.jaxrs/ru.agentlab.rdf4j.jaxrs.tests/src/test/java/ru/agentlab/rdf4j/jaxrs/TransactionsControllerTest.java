@@ -35,6 +35,8 @@ import org.ops4j.pax.exam.junit.PaxExamParameterized;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 
+import ru.agentlab.rdf4j.jaxrs.repository.transaction.Transaction;
+import ru.agentlab.rdf4j.jaxrs.repository.transaction.TransactionController;
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
 @RunWith(PaxExamParameterized.class)
@@ -44,10 +46,11 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
     @Inject
     protected RepositoryManagerComponent manager;
 
-    String ENDPOINT_ADDRESS;
-    String address;
-    String addressGetStatements;
-    String file = "/testcases/default-graph-1.ttl";
+    private String ENDPOINT_ADDRESS;
+    private String address;
+    private String addressGetStatements;
+    final private String file = "/testcases/default-graph-1.ttl";
+    final private String file2 = "/testcases/default-graph.ttl";
     RDFFormat dataFormat = Rio.getParserFormatForFileName(file).orElse(RDFFormat.RDFXML);
     
     String repId;
@@ -84,7 +87,9 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
     public void init() throws Exception {
         UUID uuid = UUID.randomUUID();
         repId = uuid.toString();
+//        repId = "rashid";
         ENDPOINT_ADDRESS = "http://localhost:" + getHttpPort() + "/rdf4j-server/repositories/";
+//        ENDPOINT_ADDRESS = "https://agentlab.ru/" +"rdf4j-server"+ "/repositories/";
         address = ENDPOINT_ADDRESS + repId + "/transactions";
         addressGetStatements = ENDPOINT_ADDRESS + repId + "/statements";
         repository = manager.getOrCreateRepository(repId, testType, null);
@@ -93,9 +98,16 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
     
     @After
     public void cleanup() {
+        cleanreapository();
         repositoryCon.close();
         repository.shutDown();
         manager.removeRepository(repId);
+    }
+
+    public void cleanreapository(){
+        WebClient client = webClientCreator(addressGetStatements);
+        Response response = client.delete();
+        client.close();
     }
 
     public WebClient webClientCreator(String myAddress){
@@ -136,10 +148,11 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
         return modelFromServer;
     }
 
-    protected String createTransaction() {
+    synchronized String createTransaction() {
         WebClient client = webClientCreator(address);
+        System.out.println("addddd"  + address);
         Response response = client.post(null);
-        assertEquals(201, response.getStatus());
+        assertEquals(204, response.getStatus());
         client.close();
         return response.getHeaderString("Location");
     }
@@ -198,6 +211,7 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
     public void clearBeforeCommitingShouldAddNoChange(){
         Model modelBeforeAction = getStatementsFromServer();
         String transAddress = createTransaction();
+        System.out.println("transaddr " + transAddress);
         addToTransaction(transAddress,file);
         deleteDataInTransAction(transAddress,file);
         Response response = commitTransaction(transAddress);
@@ -211,7 +225,7 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
         String transAddress = createTransaction();
         addToTransaction(transAddress, file);
         Response responseCommit = commitTransaction(transAddress);
-        assertThat("commitTransactionError:in tryDeleteAfterCommit", responseCommit.getStatus(), equalTo(200));
+        assertThat("commitTransactionError:in tryDeleteAfterCommit", responseCommit.getStatus(), equalTo(200    ));
         Response response = deleteTransaction(transAddress);
         assertThat("tryDeleteAfterCommit ", response.getStatus(), equalTo(500));
     }
@@ -230,6 +244,27 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
 
     @Test
     public void addTwoTransactionCommitOneShouldWorkOK(){
+        String transAddress = createTransaction();
+        String transAddressSecond = createTransaction();
+        addToTransaction(transAddress, file);
+        InputStream inputStream = TransactionsControllerTest.class.getResourceAsStream(file);
+        Model modelFromFirstFile = modelCreator(inputStream, "", RDFFormat.TURTLE);
+
+        addToTransaction(transAddressSecond,file2);
+        InputStream inputStream2 = TransactionsControllerTest.class.getResourceAsStream(file2);
+        Model modelFromSecondFile = modelCreator(inputStream2, "", RDFFormat.TURTLE);
+
+        Response response = deleteTransaction(transAddressSecond);
+        assertThat("addTwoTransactionCommitOneShouldWorkOK: delete", response.getStatus(), equalTo(204));
+        commitTransaction(transAddress);
+        Response responseAfterDelete = commitTransaction(transAddressSecond);
+        assertThat("commitTransactionError:in commitAfterRollbackShouldGetError()", responseAfterDelete.getStatus(), equalTo(500));
+        Model modelAfterAction = getStatementsFromServer();
+        assertThat("addTwoTransactionCommitOneShouldWorkOK: file should be",
+                isSubset(modelFromFirstFile,modelAfterAction), equalTo(true));
+        assertThat("addTwoTransactionCommitOneShouldWorkOK:file should not be",
+                isSubset(modelFromSecondFile,modelAfterAction), equalTo(false));
+
 
     }
     
