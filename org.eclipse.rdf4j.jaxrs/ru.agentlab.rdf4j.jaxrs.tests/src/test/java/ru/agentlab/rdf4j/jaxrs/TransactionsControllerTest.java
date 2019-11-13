@@ -164,6 +164,7 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
         WebClient client = webClientCreator(thisAddress);
         Response response = client.post(null);
         assertThat("commitTransactionError:", response.getStatus(), equalTo(204));
+        
         client.close();
     }
 
