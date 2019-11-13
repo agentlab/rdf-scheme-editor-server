@@ -1,12 +1,11 @@
 package ru.agentlab.rdf4j.jaxrs;
 
+import static org.eclipse.rdf4j.model.util.Models.isSubset;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+
+
 
 import java.io.*;
 import java.util.Arrays;
@@ -23,24 +22,22 @@ import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
-import org.hamcrest.core.IsNot;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.mockito.internal.matchers.Equals;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.TestProbeBuilder;
-import org.ops4j.pax.exam.junit.PaxExam;
+import org.ops4j.pax.exam.junit.PaxExamParameterized;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
-@RunWith(PaxExam.class)
+@RunWith(PaxExamParameterized.class)
 @ExamReactorStrategy(PerClass.class)
 public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
 
@@ -49,15 +46,16 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
 
     String ENDPOINT_ADDRESS;
     String address;
+    String addressGetStatements;
     String file = "/testcases/default-graph-1.ttl";
     RDFFormat dataFormat = Rio.getParserFormatForFileName(file).orElse(RDFFormat.RDFXML);
     
     String repId;
-    final protected String ACTION = "action=";
+    final String ACTION = "action=";
     String COMMIT = "COMMIT";
-    String ADD = "ADD";
-    String GET = "GET";
-    String DELETE = "DELETE";
+    final String ADD = "ADD";
+    final String GET = "GET";
+    final String DELETE = "DELETE";
     Repository repository;
     RepositoryConnection repositoryCon;
     private final String testType;
@@ -88,17 +86,20 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
         repId = uuid.toString();
         ENDPOINT_ADDRESS = "http://localhost:" + getHttpPort() + "/rdf4j-server/repositories/";
         address = ENDPOINT_ADDRESS + repId + "/transactions";
-        repository = manager.getOrCreateRepository(repId, "native-rdfs", null);
+        addressGetStatements = ENDPOINT_ADDRESS + repId + "/statements";
+        repository = manager.getOrCreateRepository(repId, testType, null);
         repositoryCon = repository.getConnection();
     }
     
     @After
     public void cleanup() {
         repositoryCon.close();
+        repository.shutDown();
+        manager.removeRepository(repId);
     }
 
     public WebClient webClientCreator(String myAddress){
-        WebClient client = WebClient.create(address);
+        WebClient client = WebClient.create(myAddress);
         client.type(dataFormat.getDefaultMIMEType());
         client.accept(MediaType.WILDCARD);
         return client;
@@ -125,7 +126,7 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
         return model;
     }
     public Model getStatementsFromServer(){
-        WebClient client = webClientCreator(address);
+        WebClient client = webClientCreator(addressGetStatements);
         client.accept(new MediaType("text", "turtle"));
         Response response = client.get();
         String gotString = response.readEntity(String.class);
@@ -143,36 +144,93 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
         return response.getHeaderString("Location");
     }
 
-    protected void addToTransaction(String transId, String fileAdd){
-        String thisAddress = address + "/" + transId + ACTION + ADD;
-        InputStream inputStream = TransactionsControllerTest.class.getResourceAsStream(fileAdd);
-        WebClient client = webClientCreator(thisAddress);
+    protected void addToTransaction(String transAddress, String fileAdd){
+        InputStream inputStream = TransactionsControllerTest.class.getResourceAsStream(file);
+        WebClient client = webClientCreator(transAddress + "?" + ACTION + ADD);
         Response response = client.post(inputStream);
-        assertThat("addToTransactionError:", response.getStatus(), equalTo(204));
+        assertThat("addToTransactionError:", response.getStatus(), equalTo(200));
         client.close();
     }
 
-    protected String getDataFromTransaction(String transId){
-        String thisAddress = address + "/" + transId + ACTION + GET;
-        WebClient client = webClientCreator(thisAddress);
+    protected String getDataFromTransaction(String transAddress){
+        WebClient client = webClientCreator(transAddress + "?" + ACTION + GET);
         Response response = client.put(null);
+        client.close();
         return  response.readEntity(String.class);
     }
 
-    protected void commitTransaction(String transId){
-        String thisAddress = address + "/" + transId + "?" + ACTION + COMMIT;
-        WebClient client = webClientCreator(thisAddress);
+    protected Response commitTransaction(String transAddress){
+        WebClient client = webClientCreator(transAddress + "?" + ACTION + COMMIT);
         Response response = client.post(null);
-        assertThat("commitTransactionError:", response.getStatus(), equalTo(204));
-        
         client.close();
+        return response;
+    }
+
+    protected void deleteDataInTransAction(String transAddress, String myFile){
+        WebClient client = webClientCreator(transAddress + "?" + ACTION + DELETE);
+        InputStream inputStream = TransactionsControllerTest.class.getResourceAsStream(myFile);
+        Response response  = client.post(inputStream);
+        assertThat("delteDataInTransactionError:", response.getStatus(), equalTo(200));
+        client.close();
+    }
+
+    protected Response deleteTransaction(String transAddress){
+        WebClient client = webClientCreator(transAddress);
+        Response response = client.delete();
+        client.close();
+        return response;
     }
 
 
     @Test
     public void commitingTransactionShouldWorkOK() throws IOException {
-        String location = createTransaction();
-        assertThat(location, notNullValue());
+        String transAddress = createTransaction();
+        addToTransaction( transAddress, file);
+        Response response = commitTransaction(transAddress);
+        assertThat("commitTransactionError:in commitingTransactionShouldWorkOK", response.getStatus(), equalTo(200));
+        Model modelFormServer = getStatementsFromServer();
+        InputStream inputStream = TransactionsControllerTest.class.getResourceAsStream(file);
+        Model modelFormFile = modelCreator(inputStream,"",RDFFormat.TURTLE);
+        assertThat("commitTransactionsShouldWorkOk:", isSubset(modelFormFile, modelFormServer), equalTo(true));
+    }
+
+    @Test
+    public void clearBeforeCommitingShouldAddNoChange(){
+        Model modelBeforeAction = getStatementsFromServer();
+        String transAddress = createTransaction();
+        addToTransaction(transAddress,file);
+        deleteDataInTransAction(transAddress,file);
+        Response response = commitTransaction(transAddress);
+        assertThat("commitTransactionError:in clearBeforeCommitingShouldAddNoChange", response.getStatus(), equalTo(200));
+        Model modelAfterAction = getStatementsFromServer();
+        assertThat("clearBeforeCommitingShouldAddNoChange: ", modelAfterAction.equals(modelBeforeAction), equalTo(true));
+    }
+
+    @Test
+    public void tryDeleteAfterCommit(){
+        String transAddress = createTransaction();
+        addToTransaction(transAddress, file);
+        Response responseCommit = commitTransaction(transAddress);
+        assertThat("commitTransactionError:in tryDeleteAfterCommit", responseCommit.getStatus(), equalTo(200));
+        Response response = deleteTransaction(transAddress);
+        assertThat("tryDeleteAfterCommit ", response.getStatus(), equalTo(500));
+    }
+
+    @Test
+    public void commitAfterRollbackShouldGetError(){
+        Model modelBeforeAction =getStatementsFromServer();
+        String transAddress = createTransaction();
+        addToTransaction(transAddress,file);
+        deleteTransaction(transAddress);
+        Response response  = commitTransaction(transAddress);
+        assertThat("commitTransactionError:in commitAfterRollbackShouldGetError()", response.getStatus(), equalTo(500));
+        Model modelAfterAction = getStatementsFromServer();
+        assertThat("commitAfterRollbackShouldGetError(): do not any changes", modelAfterAction.equals(modelBeforeAction), equalTo(true));
+    }
+
+    @Test
+    public void addTwoTransactionCommitOneShouldWorkOK(){
+
     }
     
 
