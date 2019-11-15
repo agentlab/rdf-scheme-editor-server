@@ -149,7 +149,7 @@ public class TransactionController {
             break;
         case SIZE:
             logger.info("PUT txn size request");
-            result = getSize(transaction, request);
+            result = getSize(repId, transaction, request);
             logger.info("PUT txn size request finished");
             break;
         case PING:
@@ -213,7 +213,7 @@ public class TransactionController {
             break;
         case SIZE:
             logger.info("POST txn size request");
-            result = getSize(transaction, request);
+            result = getSize(repId, transaction, request);
             logger.info("POST txn size request finished");
             break;
         case PING:
@@ -332,10 +332,10 @@ public class TransactionController {
         }
     }
     
-    private Response getSize(Transaction transaction, HttpServletRequest request) throws WebApplicationException, WebApplicationException {
+    private Response getSize(String repId, Transaction transaction, HttpServletRequest request) throws WebApplicationException, WebApplicationException {
         ProtocolUtil.logRequestParameters(request);
 
-        String repId = (String) request.getAttribute("repositoryID");
+        //String repId = (String) request.getAttribute("repositoryID");
         Repository repository = repositoryManager.getRepository(repId);
         if (repository == null)
             throw new WebApplicationException("Repository with id=" + repId + " not found", NOT_FOUND);

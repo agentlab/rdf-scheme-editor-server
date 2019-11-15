@@ -5,15 +5,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
 
-
-
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
 import javax.inject.Inject;
-import javax.persistence.criteria.CriteriaBuilder;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
