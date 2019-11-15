@@ -10,6 +10,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.persistence.criteria.CriteriaBuilder;
@@ -86,11 +87,11 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
 
     @Before
     public void init() throws Exception {
-//        UUID uuid = UUID.randomUUID();
-//        repId = uuid.toString();
-        repId = "rashid";
-//        ENDPOINT_ADDRESS = "http://localhost:" + getHttpPort() + "/rdf4j-server/repositories/";
-        ENDPOINT_ADDRESS = "https://agentlab.ru/" +"rdf4j-server"+ "/repositories/";
+        UUID uuid = UUID.randomUUID();
+        repId = uuid.toString();
+//        repId = "rashid";
+        ENDPOINT_ADDRESS = "http://localhost:" + getHttpPort() + "/rdf4j-server/repositories/";
+//        ENDPOINT_ADDRESS = "https://agentlab.ru/" +"rdf4j-server"+ "/repositories/";
         address = ENDPOINT_ADDRESS + repId + "/transactions";
         addressGetStatements = ENDPOINT_ADDRESS + repId + "/statements";
         repository = manager.getOrCreateRepository(repId, testType, null);
@@ -100,9 +101,9 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
     @After
     public void cleanup() {
         cleanreapository();
-//        repositoryCon.close();
-//        repository.shutDown();
-//        manager.removeRepository(repId);
+        repositoryCon.close();
+        repository.shutDown();
+        manager.removeRepository(repId);
     }
 
     public void cleanreapository(){
