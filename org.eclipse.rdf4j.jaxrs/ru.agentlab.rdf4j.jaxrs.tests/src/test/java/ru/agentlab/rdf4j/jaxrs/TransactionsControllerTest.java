@@ -10,10 +10,9 @@ import static org.junit.Assert.assertEquals;
 import java.io.*;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 
 import javax.inject.Inject;
-import javax.jws.WebParam;
+import javax.persistence.criteria.CriteriaBuilder;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -36,8 +35,6 @@ import org.ops4j.pax.exam.junit.PaxExamParameterized;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 
-import ru.agentlab.rdf4j.jaxrs.repository.transaction.Transaction;
-import ru.agentlab.rdf4j.jaxrs.repository.transaction.TransactionController;
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
 @RunWith(PaxExamParameterized.class)
@@ -51,6 +48,8 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
     private String address;
     private String addressGetStatements;
     final private String file = "/testcases/default-graph-1.ttl";
+    final private String fileDelete = "/testcases/default-graph-1deleted.ttl";
+    final private String fileHalf = "/testcases/default-graph-1half.ttl";
     final private String file2 = "/testcases/default-graph.ttl";
     RDFFormat dataFormat = Rio.getParserFormatForFileName(file).orElse(RDFFormat.RDFXML);
     
@@ -59,6 +58,7 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
     String COMMIT = "COMMIT";
     final String ADD = "ADD";
     final String GET = "GET";
+    final String SIZE = "SIZE";
     final String DELETE = "DELETE";
     Repository repository;
     RepositoryConnection repositoryCon;
@@ -195,6 +195,13 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
         return response;
     }
 
+    protected int getSizeOfTransaction(String transAddress){
+        WebClient client = webClientCreator(transAddress + "?" + ACTION + SIZE);
+        Response response = client.put(null);
+        client.close();
+        return response.readEntity(Integer.class);
+    }
+
 
     @Test
     public void commitingTransactionShouldWorkOK() throws IOException {
@@ -212,7 +219,6 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
     public void clearBeforeCommitingShouldAddNoChange(){
         Model modelBeforeAction = getStatementsFromServer();
         String transAddress = createTransaction();
-        System.out.println("transaddr " + transAddress);
         addToTransaction(transAddress,file);
         deleteDataInTransAction(transAddress,file);
         Response response = commitTransaction(transAddress);
@@ -281,8 +287,34 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
 
     @Test
     public void deleteOneStatementFromTransaction(){
-        
-    }
-    
+        String transAddress = createTransaction();
+        addToTransaction(transAddress,file);
+        InputStream inputStreamAll = TransactionsControllerTest.class.getResourceAsStream(file);
+        Model model4Statements = modelCreator(inputStreamAll, "", RDFFormat.TURTLE);
 
+        deleteDataInTransAction(transAddress, fileDelete);
+        commitTransaction(transAddress);
+
+        InputStream inputStream = TransactionsControllerTest.class.getResourceAsStream(fileDelete);
+        Model model2Statemnts = modelCreator(inputStream,"",RDFFormat.TURTLE);
+        InputStream inputStreamHalf = TransactionsControllerTest.class.getResourceAsStream(fileHalf);
+        Model modelHalf = modelCreator(inputStreamHalf,"",RDFFormat.TURTLE);
+
+        Model fromServer = getStatementsFromServer();
+        assertThat("deleteOneStatementFromTransaction: deleted model is not subset", isSubset(model2Statemnts,fromServer), equalTo(false));
+        assertThat("deleteOneStatementFromTransaction: complete  model is not subset ", isSubset(model4Statements,fromServer), equalTo(false));
+        assertThat("deleteOneStatementFromTransaction: half is subset", isSubset(modelHalf, fromServer), equalTo(true));
+    }
+
+    @Test
+    public void addTwoInOneTrAndTheSameInOtherOK(){
+        String transAddress = createTransaction();
+        addToTransaction(transAddress,file);
+
+        addToTransaction(transAddress,fileHalf);
+        int size = getSizeOfTransaction(transAddress);
+        commitTransaction(transAddress);
+
+        assertThat("addTwoInOneTrAndTheSameInOtherOK: size is 4", size, equalTo(4));
+    }
 }
