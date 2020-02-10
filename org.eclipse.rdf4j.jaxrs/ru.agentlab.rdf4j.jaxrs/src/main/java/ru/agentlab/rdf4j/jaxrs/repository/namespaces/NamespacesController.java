@@ -38,7 +38,7 @@ import ru.agentlab.rdf4j.jaxrs.ServerHTTPException;
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
 @Component(service = NamespacesController.class, property = { "osgi.jaxrs.resource=true" })
-@Path("/rdf4j-server")
+//@Path("/rdf4j-server")
 public class NamespacesController {
     private static final Logger logger = LoggerFactory.getLogger(NamespacesController.class);
 

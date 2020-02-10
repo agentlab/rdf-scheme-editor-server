@@ -49,6 +49,10 @@ public class StatementsResultTurtleMessageBodyWriter implements MessageBodyWrite
 	
 	RDFWriterRegistry serviceRegistry = RDFWriterRegistry.getInstance();
 	
+	//public StatementsResultTurtleMessageBodyWriter() {
+	//    System.out.println("StatementsResultTurtleMessageBodyWriter");
+	//}
+	
 	@Override
 	public boolean isWriteable(Class<?> type, Type genericType, Annotation[] annotations, MediaType mediaType) {
 		return StatementsResultModel.class.isAssignableFrom(type);

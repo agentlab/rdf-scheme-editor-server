@@ -44,7 +44,7 @@ import ru.agentlab.rdf4j.jaxrs.util.HttpServerUtil;
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
 @Component(service = GraphController.class, property = { "osgi.jaxrs.resource=true" })
-@Path("/rdf4j-server")
+//@Path("/rdf4j-server")
 public class GraphController {
     private static final Logger logger = LoggerFactory.getLogger(GraphController.class);
 

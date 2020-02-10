@@ -27,7 +27,7 @@ import ru.agentlab.rdf4j.jaxrs.repository.ProtocolUtils;
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
 @Component(service = NamespaceController.class, property = { "osgi.jaxrs.resource=true" })
-@Path("/rdf4j-server")
+//@Path("/rdf4j-server")
 public class NamespaceController {
     private static final Logger logger = LoggerFactory.getLogger(NamespaceController.class);
 

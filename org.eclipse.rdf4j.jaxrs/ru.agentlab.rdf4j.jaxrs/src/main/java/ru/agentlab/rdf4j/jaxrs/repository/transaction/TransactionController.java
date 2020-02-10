@@ -78,7 +78,7 @@ import ru.agentlab.rdf4j.jaxrs.sparql.providers.TupleQueryResultModel;
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
 @Component(service = TransactionController.class, property = {"osgi.jaxrs.resource=true"})
-@Path("/rdf4j-server")
+//@Path("/rdf4j-server")
 public class TransactionController {
     private static final Logger logger = LoggerFactory.getLogger(TransactionController.class);
 

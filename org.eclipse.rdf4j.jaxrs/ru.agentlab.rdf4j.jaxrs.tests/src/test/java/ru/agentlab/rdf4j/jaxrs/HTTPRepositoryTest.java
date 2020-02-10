@@ -12,7 +12,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
+import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
@@ -21,7 +24,7 @@ import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.*;
-
+import java.util.stream.Stream;
 
 import static org.eclipse.rdf4j.model.util.Models.isSubset;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -34,6 +37,16 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
 public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
+    
+    @Configuration
+    public Option[] config() {
+        Option[] options = new Option[]{
+            // uncomment if you need to debug (blocks test execution and waits for the debugger)
+            //KarafDistributionOption.debugConfiguration("5005", true),
+        };
+        return Stream.of(super.config(), options).flatMap(Stream::of).toArray(Option[]::new);
+    }
+    
     @Inject
     protected RepositoryManagerComponent manager;
 
@@ -43,7 +56,7 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
     RepositoryConnection repocon;
     Repository rep;
     RepositoryConnection repcon;
-    String rdf4jServer;
+    
     String repositoryID;
     String address;
     Resource [] context = new Resource[] {};
@@ -56,11 +69,11 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
 
     @Before
     public void init() throws Exception {
-//        repositoryID = "12345648";
-        repositoryID = "rashid";
-//        repository = manager.getOrCreateRepository(repositoryID, "memory", null);
-//        rdf4jServer = "http://localhost:" + getHttpPort() + "/rdf4j-server/";
-        rdf4jServer = "https://agentlab.ru" + "/rdf4j-server/";
+        super.init();
+        
+        repositoryID = "12345648";
+        repository = manager.getOrCreateRepository(repositoryID, "memory", null);
+        //rdf4jServer = "https://agentlab.ru" + "/rdf4j-server/";
         address = rdf4jServer + "repositories/" + repositoryID + "/statements";
         rep = new HTTPRepository(rdf4jServer, repositoryID);
         repcon = rep.getConnection();
@@ -72,8 +85,8 @@ public class HTTPRepositoryTest extends  Rdf4jJaxrsTestSupport{
 
     @After
     public void cleanup() {
-//        repcon.close();
-//        repository.shutDown();
+        repcon.close();
+        repository.shutDown();
 //        manager.removeRepository(repositoryID);
     }
 

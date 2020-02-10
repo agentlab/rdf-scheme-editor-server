@@ -10,7 +10,7 @@ import org.osgi.service.component.annotations.Component;
  * Handles requests for protocol information. Currently returns the protocol version as plain text.
  */
 @Component(service = ProtocolController.class, property = { "osgi.jaxrs.resource=true" })
-@Path("/rdf4j-server")
+//@Path("/rdf4j-server")
 public class ProtocolController {
 
 	@GET

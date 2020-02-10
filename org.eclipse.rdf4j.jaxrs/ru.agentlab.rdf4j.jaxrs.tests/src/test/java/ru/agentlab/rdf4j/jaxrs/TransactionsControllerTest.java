@@ -13,6 +13,7 @@ import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
@@ -46,7 +47,6 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
     @Inject
     protected RepositoryManagerComponent manager;
 
-    private String ENDPOINT_ADDRESS;
     private String address;
     private String addressGetStatements;
     final private String file = "/testcases/default-graph-1.ttl";
@@ -68,12 +68,16 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
 
     @Configuration
     public static Option[] config2() {
-        return config();
+        Option[] options = new Option[]{
+            // uncomment if you need to debug (blocks test execution and waits for the debugger)
+            //KarafDistributionOption.debugConfiguration("5005", true),
+        };
+        return Stream.of(configBase(), options).flatMap(Stream::of).toArray(Option[]::new);
     }
 
     @ProbeBuilder
     public static TestProbeBuilder probeConfiguration2(TestProbeBuilder probe) {
-        return probeConfiguration(probe);
+        return probeConfigurationBase(probe);
     }
 
     public TransactionsControllerTest(String typeTest){
@@ -82,19 +86,22 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
     @Parameterized.Parameters
     public static List<String[]> data(){
         return Arrays.asList(new String[][]{
-            {"memory"},{"native"},{"native-rdfs"}
+            {"memory"},{"native"}//,{"native-rdfs"}
         });
     }
 
     @Before
     public void init() throws Exception {
+        super.init();
+        
         UUID uuid = UUID.randomUUID();
         repId = uuid.toString();
-//        repId = "rashid";
-        ENDPOINT_ADDRESS = "http://localhost:" + getHttpPort() + "/rdf4j-server/repositories/";
-//        ENDPOINT_ADDRESS = "https://agentlab.ru/" +"rdf4j-server"+ "/repositories/";
+        //repId = "rashid";
+        //ENDPOINT_ADDRESS = "https://agentlab.ru/" +"rdf4j-server"+ "/repositories/";
         address = ENDPOINT_ADDRESS + repId + "/transactions";
         addressGetStatements = ENDPOINT_ADDRESS + repId + "/statements";
+        
+        System.out.println("create repository, type=" + testType + ", repId="  + repId);
         repository = manager.getOrCreateRepository(repId, testType, null);
         repositoryCon = repository.getConnection();
     }
@@ -153,7 +160,7 @@ public class TransactionsControllerTest extends Rdf4jJaxrsTestSupport2 {
 
     synchronized String createTransaction() {
         WebClient client = webClientCreator(address);
-        System.out.println("addddd"  + address);
+        System.out.println("create transaction "  + address);
         Response response = client.post(null);
         assertEquals(201, response.getStatus());
         client.close();

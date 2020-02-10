@@ -15,6 +15,7 @@ import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
@@ -54,7 +55,6 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
     protected RepositoryManagerComponent manager;
 
     String wrongRepAddr;
-    String ENDPOINT_ADDRESS;
     String WRONG_TRIPLE_ADDRESS = "&subj=%3Curn:x-local:graph1%3E&pred=<http://purl.org/dc/elements/1.1/publisher>&obj=\"BobUS\"";
     String TRIPLE_ADDRESS;
     String TWO_TRIPLE_ADDRESS;
@@ -78,13 +78,17 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
     private String grafContext;
 
     @Configuration
-    public static Option[] config2() {
-        return config();
+    public static Option[] config() {
+        Option[] options = new Option[]{
+            // uncomment if you need to debug (blocks test execution and waits for the debugger)
+            //KarafDistributionOption.debugConfiguration("5005", true),
+        };
+        return Stream.of(configBase(), options).flatMap(Stream::of).toArray(Option[]::new);
     }
 
     @ProbeBuilder
-    public static TestProbeBuilder probeConfiguration2(TestProbeBuilder probe) {
-        return probeConfiguration(probe);
+    public static TestProbeBuilder probeConfiguration(TestProbeBuilder probe) {
+        return probeConfigurationBase(probe);
     }
 
     public StatementsControllerTest(String typeTest,String grafContext){
@@ -104,12 +108,13 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
 
     @Before
     public void init() throws Exception {
+        super.init();
+        
         UUID uuid = UUID.randomUUID();
         repId = uuid.toString();
         System.out.println("repId=" + repId + ", testType=" + testType);
         TWO_TRIPLE_ADDRESS = "&obj=\"Bob\"&pred=<http://purl.org/dc/elements/1.1/publisher>";
         TRIPLE_ADDRESS = "&subj=%3Curn:x-local:graph1%3E&pred=<http://purl.org/dc/elements/1.1/publisher>&obj=\"Bob\""   ;
-        ENDPOINT_ADDRESS = "http://localhost:" + getHttpPort() + "/rdf4j-server/repositories/";
         wrongRepAddr = ENDPOINT_ADDRESS + "id1237" + "/statements";
         address = ENDPOINT_ADDRESS + repId + "/statements?context=" + grafContext ;
         

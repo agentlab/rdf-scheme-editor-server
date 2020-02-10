@@ -24,7 +24,7 @@ import org.osgi.service.component.annotations.Reference;
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
 @Component(service = ContextController.class, property = { "osgi.jaxrs.resource=true" })
-@Path("/rdf4j-server")
+//@Path("/rdf4j-server")
 public class ContextController {
     //private static final Logger logger = LoggerFactory.getLogger(ContextController.class);
 

@@ -8,6 +8,7 @@ import static org.junit.Assert.assertNull;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
@@ -27,7 +28,10 @@ import org.eclipse.rdf4j.repository.config.ConfigTemplate;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
+import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
 
@@ -37,14 +41,22 @@ import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
 public class RepositoryControllerTest extends Rdf4jJaxrsTestSupport {
-    String ENDPOINT_ADDRESS;
+    
+    @Configuration
+    public Option[] config() {
+        Option[] options = new Option[]{
+             // uncomment if you need to debug (blocks test execution and waits for the debugger)
+             //KarafDistributionOption.debugConfiguration("5005", true),
+        };
+        return Stream.of(super.config(), options).flatMap(Stream::of).toArray(Option[]::new);
+    }
 
     @Inject
     protected RepositoryManagerComponent manager;
 
     @Before
     public void init() throws Exception {
-        ENDPOINT_ADDRESS = "http://localhost:" + getHttpPort() + "/rdf4j-server/repositories/";
+        super.init();
     }
 
     @Test

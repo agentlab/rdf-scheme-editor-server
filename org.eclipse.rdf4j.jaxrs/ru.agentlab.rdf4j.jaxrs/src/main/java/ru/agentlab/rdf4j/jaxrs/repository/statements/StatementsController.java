@@ -18,10 +18,13 @@ import static org.eclipse.rdf4j.http.protocol.Protocol.USING_NAMED_GRAPH_PARAM_N
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -71,7 +74,7 @@ import ru.agentlab.rdf4j.jaxrs.sparql.providers.StatementsResultModel;
 import ru.agentlab.rdf4j.jaxrs.util.HttpServerUtil;
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
-@Path("/rdf4j-server")
+//@Path("/rdf4j-server")
 @Component(service=StatementsController.class, property={"osgi.jaxrs.resource=true"})
 public class StatementsController {
 	private static final Logger logger = LoggerFactory.getLogger(StatementsController.class);
@@ -134,6 +137,10 @@ public class StatementsController {
 			throw new WebApplicationException("Cannot find repository '" + repId, NOT_FOUND);
 
 		String mimeType = HttpServerUtil.getMIMEType(request.getContentType());
+		
+		Map<String, String[]>  parms = request.getParameterMap();
+		boolean bb = parms.containsKey(Protocol.UPDATE_PARAM_NAME);
+		String[] ss = parms.get(Protocol.UPDATE_PARAM_NAME);
 
 		if (Protocol.TXN_MIME_TYPE.equals(mimeType)) {
 			logger.info("POST transaction to repository");
@@ -141,53 +148,46 @@ public class StatementsController {
 		} else if (Protocol.SPARQL_UPDATE_MIME_TYPE.equals(mimeType)
 		        || request.getParameterMap().containsKey(Protocol.UPDATE_PARAM_NAME)) {
 			logger.info("POST SPARQL update request to repository");
-			getSparqlUpdateResult(repository, request);
+			getSparqlUpdateResult(repository, request, null);
 		} else {
 			logger.info("POST data to repository");
 			getAddDataResult(repository, request, false);
 		}
 	}
 
-	/*@POST
+	@POST
 	@Path("/repositories/{repId}/statements")
 	@Consumes ({"application/x-www-form-urlencoded"})
-	public void addStatements(@Context HttpHeaders headers,
+	public void addStatements(@Context HttpServletRequest request,
 			@PathParam("repId") String repId,
-			@QueryParam("context") String[] contextsStr,
-			@QueryParam("baseURI") String baseUriStr,
-			@QueryParam("infer") @DefaultValue("true") boolean includeInferred,
-			@QueryParam("timeout") int maxQueryTime,
-			@QueryParam("queryLn") String queryLnStr,
-			@QueryParam("preserveNodeId") @DefaultValue("false") boolean preserveNodeIds,
-			@FormParam("update") String formUpdate,
-			@QueryParam("update") String queryUpdate) throws RepositoryException, IOException, HTTPException {
+			@FormParam("update") String queryUpdate) throws RepositoryException, IOException, HTTPException {
 		logger.info("POST data to repository");
+		//logger.info("repId={}, queryLn={}, baseURI={}, infer={}, timeout={}, distinct={}, limit={}, offset={}", repId, queryLnStr, includeInferred, maxQueryTime);
+		
 		Repository repository = repositoryManager.getRepository(repId);
 		if(repository == null)
 			throw new WebApplicationException("Cannot find repository '" + repId, NOT_FOUND);
 
-		String mimeType = HttpServerUtil.getMIMEType(headers.getHeaderString(HttpHeaders.CONTENT_TYPE));
-
-		if (queryUpdate == null && formUpdate != null)
-			queryUpdate = formUpdate;
+		String mimeType = HttpServerUtil.getMIMEType(request.getContentType());
 
 		int qryCode = 0;
 		if (logger.isInfoEnabled() || logger.isDebugEnabled()) {
-			qryCode = String.valueOf(formUpdate).hashCode();
+			qryCode = String.valueOf(queryUpdate).hashCode();
 		}
-		logger.info("query {} = {}", qryCode, formUpdate);
-		logger.info("repId={}, queryLn={}, baseURI={}, infer={}, timeout={}, distinct={}, limit={}, offset={}", repId, queryLnStr, includeInferred, maxQueryTime);
 
 		if (Protocol.TXN_MIME_TYPE.equals(mimeType)) {
 			logger.info("POST transaction to repository");
-			//getTransactionResultResult(repository, request, response);
+			getTransactionResultResult(repository, request);
 		} else if (Protocol.SPARQL_UPDATE_MIME_TYPE.equals(mimeType) || queryUpdate != null) {
 			logger.info("POST SPARQL update request to repository");
-			getSparqlUpdateResult(repository, headers, baseUriStr, preserveNodeIds, mimeType, queryUpdate, queryLnStr, includeInferred, maxQueryTime);
-		}
-	}*/
+			getSparqlUpdateResult(repository, request, queryUpdate);
+		} else {
+            logger.info("POST data to repository");
+            getAddDataResult(repository, request, false);
+        }
+	}
 
-	private void getSparqlUpdateResult(Repository repository, HttpServletRequest request)
+	private void getSparqlUpdateResult(Repository repository, HttpServletRequest request, String queryUpdate)
 			throws RepositoryException, IOException, HTTPException {
 		//ProtocolUtil.logRequestParameters(request);
 	    
@@ -204,7 +204,7 @@ public class StatementsController {
             if (sparqlUpdateString.isEmpty())
                 sparqlUpdateString = null;
         } else {
-            sparqlUpdateString = request.getParameterValues(Protocol.UPDATE_PARAM_NAME)[0];
+            sparqlUpdateString = queryUpdate;//request.getParameterValues(Protocol.UPDATE_PARAM_NAME)[0];
         }
 
 		// default query language is SPARQL

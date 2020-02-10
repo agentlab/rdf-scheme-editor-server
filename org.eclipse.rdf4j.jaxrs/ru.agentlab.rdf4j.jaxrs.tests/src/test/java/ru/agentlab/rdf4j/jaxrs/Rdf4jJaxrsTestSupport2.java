@@ -1,15 +1,5 @@
 package ru.agentlab.rdf4j.jaxrs;
 
-import static org.ops4j.pax.exam.CoreOptions.junitBundles;
-import static org.ops4j.pax.exam.CoreOptions.maven;
-import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.configureSecurity;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.editConfigurationFilePut;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.features;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.karafDistributionConfiguration;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.keepRuntimeFolder;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.logLevel;
-
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
@@ -55,12 +45,15 @@ import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.CoreOptions;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.ProbeBuilder;
 import org.ops4j.pax.exam.RerunTestException;
 import org.ops4j.pax.exam.TestProbeBuilder;
+import org.ops4j.pax.exam.container.remote.RBCRemoteTargetOptions;
 import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
-import org.ops4j.pax.exam.karaf.options.LogLevelOption;
+import org.ops4j.pax.exam.karaf.options.LogLevelOption.LogLevel;
 import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -74,7 +67,20 @@ import org.osgi.util.tracker.ServiceTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * For parameterized tests.
+ * Helper class with removed annotations @Configuration and @ProbeBuilder
+ *
+ */
 public class Rdf4jJaxrsTestSupport2 {
+    public String rdf4jServer;
+    public String ENDPOINT_ADDRESS;
+    
+    public void init() throws Exception {
+        rdf4jServer = "http://localhost:" + getHttpPort() + "/rdf4j-server/";
+        ENDPOINT_ADDRESS = rdf4jServer + "repositories/";
+    }
+    
     private static final EnumSet<FeaturesService.Option> NO_AUTO_REFRESH = EnumSet.of(FeaturesService.Option.NoAutoRefreshBundles);
     public static final String MIN_RMI_SERVER_PORT = "44444";
     public static final String MAX_RMI_SERVER_PORT = "65534";
@@ -85,9 +91,9 @@ public class Rdf4jJaxrsTestSupport2 {
     public static final String MIN_SSH_PORT = "8101";
     public static final String MAX_SSH_PORT = "8888";
 
-    static final Long COMMAND_TIMEOUT = 30000L;
-    static final Long SERVICE_TIMEOUT = 30000L;
-    static final long BUNDLE_TIMEOUT = 30000L;
+    static final Long COMMAND_TIMEOUT = 360000L;
+    static final Long SERVICE_TIMEOUT = 360000L;
+    static final long BUNDLE_TIMEOUT = 360000L;
 
     private static Logger LOG = LoggerFactory.getLogger(KarafTestSupport.class);
 
@@ -154,7 +160,7 @@ public class Rdf4jJaxrsTestSupport2 {
     public Retry retry = new Retry(true);
 
     
-    public static TestProbeBuilder probeConfiguration(TestProbeBuilder probe) {
+    public static TestProbeBuilder probeConfigurationBase(TestProbeBuilder probe) {
         probe.setHeader(Constants.IMPORT_PACKAGE, "org.eclipse.rdf4j.query.algebra.evaluation.impl,org.apache.cxf.jaxrs.client");
         return probe;
     }
@@ -167,9 +173,14 @@ public class Rdf4jJaxrsTestSupport2 {
         return new File(res.getFile());
     }
     
-    public static Option[] config() {
-        MavenArtifactUrlReference karafUrl = maven().groupId("org.apache.karaf").artifactId("apache-karaf").versionAsInProject().type("tar.gz");
-
+    /**
+     * Override this method if you want to change the Karaf distribution in use.
+     */
+    public static MavenArtifactUrlReference getKarafDistribution() {
+        return CoreOptions.maven().groupId("org.apache.karaf").artifactId("apache-karaf").versionAsInProject().type("tar.gz");
+    }
+    
+    public static Option[] configBase() {
         String httpPort = Integer.toString(getAvailablePort(Integer.parseInt(MIN_HTTP_PORT), Integer.parseInt(MAX_HTTP_PORT)));
         String rmiRegistryPort = Integer.toString(getAvailablePort(Integer.parseInt(MIN_RMI_REG_PORT), Integer.parseInt(MAX_RMI_REG_PORT)));
         String rmiServerPort = Integer.toString(getAvailablePort(Integer.parseInt(MIN_RMI_SERVER_PORT), Integer.parseInt(MAX_RMI_SERVER_PORT)));
@@ -182,17 +193,28 @@ public class Rdf4jJaxrsTestSupport2 {
         return new Option[] {
             // enable for remote debugging
             //KarafDistributionOption.debugConfiguration("5005", true),
-            karafDistributionConfiguration().frameworkUrl(karafUrl).name("Apache Karaf").unpackDirectory(new File("target/exam")),
+            KarafDistributionOption.karafDistributionConfiguration().frameworkUrl(getKarafDistribution()).name("Apache Karaf").unpackDirectory(new File("target/exam")),
             // enable JMX RBAC security, thanks to the KarafMBeanServerBuilder
-            configureSecurity().disableKarafMBeanServerBuilder(),
-            // configureConsole().ignoreLocalConsole(),
-            keepRuntimeFolder(), logLevel(LogLevelOption.LogLevel.INFO), mavenBundle().groupId("org.awaitility").artifactId("awaitility").versionAsInProject(),
-            mavenBundle().groupId("org.apache.servicemix.bundles").artifactId("org.apache.servicemix.bundles.hamcrest").versionAsInProject(), mavenBundle().groupId("org.apache.karaf.itests").artifactId("common").versionAsInProject(),
-            features(maven().groupId("ru.agentlab.rdf4j").artifactId("ru.agentlab.rdf4j.features").type("xml").version("0.0.1-SNAPSHOT"), "ru.agentlab.rdf4j.jaxrs"),
-            // mavenBundle().groupId("org.mockito").artifactId("mockito-core").version("2.23.4"),
-            junitBundles(), editConfigurationFilePut("etc/org.apache.felix.http.cfg", "org.osgi.service.http.port", httpPort), editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiRegistryPort", rmiRegistryPort),
-            editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiServerPort", rmiServerPort), editConfigurationFilePut("etc/org.apache.karaf.shell.cfg", "sshPort", sshPort),
-            editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg", "org.ops4j.pax.url.mvn.localRepository", localRepository)
+            KarafDistributionOption.configureSecurity().disableKarafMBeanServerBuilder(),
+            //KarafDistributionOption.configureConsole().ignoreLocalConsole(),
+            KarafDistributionOption.keepRuntimeFolder(),
+            KarafDistributionOption.logLevel(LogLevel.INFO),
+            CoreOptions.systemTimeout(3600000),
+            RBCRemoteTargetOptions.waitForRBCFor(3600000),
+            CoreOptions.mavenBundle().groupId("org.awaitility").artifactId("awaitility").versionAsInProject(),
+            CoreOptions.mavenBundle().groupId("org.apache.servicemix.bundles").artifactId("org.apache.servicemix.bundles.hamcrest").versionAsInProject(),
+            CoreOptions.mavenBundle().groupId("org.apache.karaf.itests").artifactId("common").versionAsInProject(),
+            KarafDistributionOption.features(CoreOptions.maven().groupId("ru.agentlab.rdf4j").artifactId("ru.agentlab.rdf4j.features").type("xml").version("3.1.0-SNAPSHOT"), "ru.agentlab.rdf4j.jaxrs"),
+            // CoreOptions.mavenBundle().groupId("org.mockito").artifactId("mockito-core").version("2.23.4"),
+            CoreOptions.junitBundles(),
+            KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port", httpPort),
+            KarafDistributionOption.editConfigurationFilePut("etc/org.apache.cxf.osgi.cfg", "org.apache.cxf.servlet.context", "/rdf4j-server"),
+            KarafDistributionOption.editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiRegistryPort", rmiRegistryPort),
+            KarafDistributionOption.editConfigurationFilePut("etc/org.apache.karaf.management.cfg", "rmiServerPort", rmiServerPort),
+            KarafDistributionOption.editConfigurationFilePut("etc/org.apache.karaf.shell.cfg", "sshPort", sshPort),
+            KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg", "org.ops4j.pax.url.mvn.localRepository", localRepository),
+            KarafDistributionOption.editConfigurationFilePut("etc/branding.properties", "welcome", ""), // No welcome banner
+            KarafDistributionOption.editConfigurationFilePut("etc/branding-ssh.properties", "welcome", "")
         };
     }
     
@@ -211,7 +233,6 @@ public class Rdf4jJaxrsTestSupport2 {
 
     /**
      * Executes a shell command and returns output as a String.
-     * Commands have a default timeout of 10 seconds.
      *
      * @param command The command to execute
      * @param principals The principals (e.g. RolePrincipal objects) to run the command under
@@ -223,7 +244,6 @@ public class Rdf4jJaxrsTestSupport2 {
 
     /**
      * Executes a shell command and returns output as a String.
-     * Commands have a default timeout of 10 seconds.
      *
      * @param command    The command to execute.
      * @param timeout    The amount of time in millis to wait for the command to execute.
@@ -459,7 +479,7 @@ public class Rdf4jJaxrsTestSupport2 {
     @SuppressWarnings("rawtypes")
     private static String explode(Dictionary dictionary) {
         Enumeration keys = dictionary.keys();
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         while (keys.hasMoreElements()) {
             Object key = keys.nextElement();
             result.append(String.format("%s=%s", key, dictionary.get(key)));
@@ -508,7 +528,7 @@ public class Rdf4jJaxrsTestSupport2 {
     }
 
     public String getHttpPort() throws Exception {
-        org.osgi.service.cm.Configuration configuration = configurationAdmin.getConfiguration("org.apache.felix.http", null);
+        org.osgi.service.cm.Configuration configuration = configurationAdmin.getConfiguration("org.ops4j.pax.web", null);
         if (configuration != null) {
             return configuration.getProperties().get("org.osgi.service.http.port").toString();
         }
@@ -673,4 +693,5 @@ public class Rdf4jJaxrsTestSupport2 {
             }
         }
     }
+
 }

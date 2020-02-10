@@ -31,7 +31,7 @@ import ru.agentlab.rdf4j.jaxrs.ProtocolUtil;
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
 @Component(service = TransactionStartController.class, property = {"osgi.jaxrs.resource=true"})
-@Path("/rdf4j-server")
+//@Path("/rdf4j-server")
 public class TransactionStartController {
     private static final Logger logger = LoggerFactory.getLogger(TransactionStartController.class);
 
@@ -52,7 +52,7 @@ public class TransactionStartController {
             throw new WebApplicationException("Transaction start error for repository with id=" + repId, INTERNAL_SERVER_ERROR);
         logger.info("transaction started");
         
-        String txnIdStr = "/rdf4j-server/repositories/" + repId + "/transactions/" + txnId.toString();
+        String txnIdStr = "/repositories/" + repId + "/transactions/" + txnId.toString();
         return Response.created(URI.create(txnIdStr)).build();
     }
     

@@ -75,12 +75,16 @@ import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
  *
  */
 @Component(service=RepositoryController.class, property={"osgi.jaxrs.resource=true"})
-@Path("/rdf4j-server")
+//@Path("/rdf4j-server")
 public class RepositoryController {
 	private static final Logger logger = LoggerFactory.getLogger(RepositoryController.class);
 
 	@Reference
 	private RepositoryManagerComponent repositoryManager;
+	
+	public RepositoryController() {
+        System.out.println("RepositoryController");
+    }
 
 	/**
 	 * TODO: HEAD method???

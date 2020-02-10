@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
@@ -31,6 +32,8 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.MethodSorters;
+import org.ops4j.pax.exam.Configuration;
+import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.PaxExam;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
@@ -41,6 +44,16 @@ import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 @ExamReactorStrategy(PerClass.class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class GraphControllerTest extends Rdf4jJaxrsTestSupport {
+    
+    @Configuration
+    public Option[] config() {
+        Option[] options = new Option[]{
+             // uncomment if you need to debug (blocks test execution and waits for the debugger)
+             //KarafDistributionOption.debugConfiguration("5005", true),
+        };
+        return Stream.of(super.config(), options).flatMap(Stream::of).toArray(Option[]::new);
+    }
+    
     protected String address;
     protected String file = "/testcases/default-graph.ttl";
     protected String file1 = "/testcases/default-graph-1.ttl";
@@ -62,7 +75,8 @@ public class GraphControllerTest extends Rdf4jJaxrsTestSupport {
 
     @Before
     public void init() throws Exception {
-        String ENDPOINT_ADDRESS = "http://localhost:" + getHttpPort() + "/rdf4j-server/repositories/";
+        super.init();
+        
         String graphSection = "/rdf-graphs/";
         address = ENDPOINT_ADDRESS + repId + graphSection;
         repository = manager.getOrCreateRepository(repId, "native", null);
