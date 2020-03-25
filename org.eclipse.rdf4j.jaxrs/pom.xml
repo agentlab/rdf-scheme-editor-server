@@ -7,7 +7,7 @@
 
 	<groupId>ru.agentlab.rdf4j</groupId>
 	<artifactId>ru.agentlab.rdf4j.parent</artifactId>
-	<version>3.1.0-SNAPSHOT</version>
+	<version>3.1.2-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	
 	<modules>
@@ -45,7 +45,7 @@
 							</execution>
 						</executions>
 					</plugin>
-					<plugin>
+					<!--<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-javadoc-plugin</artifactId>
 						<executions>
@@ -56,7 +56,7 @@
 								</goals>
 							</execution>
 						</executions>
-					</plugin>
+					</plugin>-->
 				</plugins>
 			</build>
 		</profile>
@@ -121,7 +121,7 @@
 		<cxf.version>3.3.5</cxf.version>
 		<aries.whiteboard.version>1.0.7</aries.whiteboard.version>
 
-		<rdf4j.server.version>3.1.0-SNAPSHOT</rdf4j.server.version>
+		<rdf4j.osgi.version>3.1.2</rdf4j.osgi.version>
 		
 		<lucene.version>7.5.0</lucene.version>
 		<solr.version>7.5.0</solr.version>
@@ -166,7 +166,7 @@
 		<dependency>
 			<groupId>org.eclipse.rdf4j</groupId>
 			<artifactId>rdf4j-runtime-osgi-agentlab</artifactId>
-			<version>${rdf4j.server.version}</version>
+			<version>${rdf4j.osgi.version}</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.eclipse.rdf4j</groupId>
@@ -365,11 +365,6 @@
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-jdk14</artifactId>
-			<version>${slf4j.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.slf4j</groupId>
 			<artifactId>jcl-over-slf4j</artifactId>
 			<version>${slf4j.version}</version>
 			<scope>runtime</scope>
@@ -379,11 +374,17 @@
 			<artifactId>log4j-over-slf4j</artifactId>
 			<version>${slf4j.version}</version>
 		</dependency>
+		<!-- You should NOT add this because we use logback
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-simple</artifactId>
 			<version>${slf4j.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-jdk14</artifactId>
+			<version>${slf4j.version}</version>
+		</dependency>-->
 
 		<dependency>
 			<groupId>ch.qos.logback</groupId>

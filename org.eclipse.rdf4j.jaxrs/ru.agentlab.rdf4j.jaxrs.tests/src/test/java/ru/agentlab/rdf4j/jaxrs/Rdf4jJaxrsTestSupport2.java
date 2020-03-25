@@ -204,7 +204,7 @@ public class Rdf4jJaxrsTestSupport2 {
             CoreOptions.mavenBundle().groupId("org.awaitility").artifactId("awaitility").versionAsInProject(),
             CoreOptions.mavenBundle().groupId("org.apache.servicemix.bundles").artifactId("org.apache.servicemix.bundles.hamcrest").versionAsInProject(),
             CoreOptions.mavenBundle().groupId("org.apache.karaf.itests").artifactId("common").versionAsInProject(),
-            KarafDistributionOption.features(CoreOptions.maven().groupId("ru.agentlab.rdf4j").artifactId("ru.agentlab.rdf4j.features").type("xml").version("3.1.0-SNAPSHOT"), "ru.agentlab.rdf4j.jaxrs"),
+            KarafDistributionOption.features(CoreOptions.maven().groupId("ru.agentlab.rdf4j").artifactId("ru.agentlab.rdf4j.features").type("xml").version("3.1.2-SNAPSHOT"), "ru.agentlab.rdf4j.jaxrs"),
             // CoreOptions.mavenBundle().groupId("org.mockito").artifactId("mockito-core").version("2.23.4"),
             CoreOptions.junitBundles(),
             KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port", httpPort),

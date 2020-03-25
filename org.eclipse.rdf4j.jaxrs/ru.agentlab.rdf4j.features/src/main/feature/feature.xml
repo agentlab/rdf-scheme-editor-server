@@ -2,66 +2,66 @@
 
 <features name="ru.agentlab.rdf4j-${project.version}" xmlns="http://karaf.apache.org/xmlns/features/v1.4.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://karaf.apache.org/xmlns/features/v1.4.0">
 
-    <feature name="org.eclipse.rdf4j" version="${rdf4j.server.version}">
+    <feature name="org.eclipse.rdf4j" version="${rdf4j.osgi.version}">
         <feature prerequisite="true" dependency="false">wrap</feature>
 
-        <bundle dependency="true">mvn:org.eclipse.rdf4j/rdf4j-runtime-osgi-agentlab/${rdf4j.server.version}</bundle>
+        <bundle dependency="true">mvn:org.eclipse.rdf4j/rdf4j-runtime-osgi-agentlab/${rdf4j.osgi.version}</bundle>
 
-<!--         <bundle dependency="true">mvn:org.eclipse.rdf4j/rdf4j-client/${rdf4j.server.version}</bundle> -->
-        <!--<bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-http-client/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-http-protocol/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-model/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-query/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryalgebra-model/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryparser-api/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryparser-serql/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryparser-sparql/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryrender/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryresultio-api/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryresultio-binary/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryresultio-sparqljson/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryresultio-sparqlxml/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryresultio-text/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-repository-api/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-repository-contextaware/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-repository-event/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-repository-http/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-repository-manager/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-repository-sparql/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-api/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-binary/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-datatypes/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-jsonld/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-languages/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-n3/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-nquads/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-ntriples/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-rdfjson/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-rdfxml/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-trig/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-trix/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-turtle/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-util/${rdf4j.server.version}</bundle>-->
+<!--         <bundle dependency="true">mvn:org.eclipse.rdf4j/rdf4j-client/${rdf4j.osgi.version}</bundle> -->
+        <!--<bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-http-client/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-http-protocol/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-model/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-query/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryalgebra-model/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryparser-api/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryparser-serql/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryparser-sparql/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryrender/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryresultio-api/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryresultio-binary/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryresultio-sparqljson/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryresultio-sparqlxml/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryresultio-text/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-repository-api/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-repository-contextaware/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-repository-event/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-repository-http/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-repository-manager/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-repository-sparql/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-api/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-binary/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-datatypes/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-jsonld/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-languages/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-n3/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-nquads/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-ntriples/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-rdfjson/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-rdfxml/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-trig/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-trix/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-rio-turtle/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-util/${rdf4j.osgi.version}</bundle>-->
 
-        <!--<bundle dependency="true">mvn:org.eclipse.rdf4j/rdf4j-storage/${rdf4j.server.version}</bundle>-->
-<!--         <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryalgebra-evaluation/${rdf4j.server.version}/$Bundle-SymbolicName=rdf4j-queryalgebra-evaluation</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-federation/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-inferencer/${rdf4j.server.version}</bundle> -->
-        <!--<bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-lucene/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-lucene-api/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-lucene-spin/${rdf4j.server.version}</bundle>-->
-<!--         <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-memory/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-nativerdf/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-repository-dataset/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-repository-sail/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-api/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-base/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-model/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-spin/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-shacl/${rdf4j.server.version}</bundle>
-        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-spin/${rdf4j.server.version}</bundle> -->
+        <!--<bundle dependency="true">mvn:org.eclipse.rdf4j/rdf4j-storage/${rdf4j.osgi.version}</bundle>-->
+<!--         <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-queryalgebra-evaluation/${rdf4j.osgi.version}/$Bundle-SymbolicName=rdf4j-queryalgebra-evaluation</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-federation/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-inferencer/${rdf4j.osgi.version}</bundle> -->
+        <!--<bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-lucene/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-lucene-api/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-lucene-spin/${rdf4j.osgi.version}</bundle>-->
+<!--         <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-memory/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-nativerdf/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-repository-dataset/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-repository-sail/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-api/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-base/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-model/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-sail-spin/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-shacl/${rdf4j.osgi.version}</bundle>
+        <bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-spin/${rdf4j.osgi.version}</bundle> -->
 
-        <!--<bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-config/${rdf4j.server.version}</bundle>-->
+        <!--<bundle dependency="true">wrap:mvn:org.eclipse.rdf4j/rdf4j-config/${rdf4j.osgi.version}</bundle>-->
 
         <bundle dependency="true">mvn:com.fasterxml.jackson.core/jackson-core/${jackson.version}</bundle>
         <bundle dependency="true">mvn:com.fasterxml.jackson.core/jackson-databind/${jackson.version}</bundle>

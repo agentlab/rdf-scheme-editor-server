@@ -82,10 +82,6 @@ public class RepositoryController {
 	@Reference
 	private RepositoryManagerComponent repositoryManager;
 	
-	public RepositoryController() {
-        System.out.println("RepositoryController");
-    }
-
 	/**
 	 * TODO: HEAD method???
 	 */

@@ -28,7 +28,7 @@ https://karaf.apache.org/get-started.html
 
 ### Добавить репозитории фич
 
-* `feature:repo-add mvn:ru.agentlab.rdf4j/ru.agentlab.rdf4j.features/3.1.0-SNAPSHOT/xml`
+* `feature:repo-add mvn:ru.agentlab.rdf4j/ru.agentlab.rdf4j.features/3.1.2-SNAPSHOT/xml`
 
 ### Установить фичи, активировать плагины
 

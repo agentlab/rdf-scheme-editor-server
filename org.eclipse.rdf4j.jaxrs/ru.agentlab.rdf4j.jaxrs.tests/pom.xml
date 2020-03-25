@@ -8,7 +8,7 @@
 	<parent>
 		<groupId>ru.agentlab.rdf4j</groupId>
 		<artifactId>ru.agentlab.rdf4j.parent</artifactId>
-		<version>3.1.0-SNAPSHOT</version>
+		<version>3.1.2-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -40,12 +40,12 @@
 		<dependency>
             <groupId>ru.agentlab.rdf4j</groupId>
             <artifactId>ru.agentlab.rdf4j.jaxrs</artifactId>
-            <version>3.1.0-SNAPSHOT</version>
+            <version>3.1.2-SNAPSHOT</version>
         </dependency>
         <dependency>
         	<groupId>ru.agentlab.rdf4j</groupId>
         	<artifactId>ru.agentlab.rdf4j.cmpn</artifactId>
-        	<version>3.1.0-SNAPSHOT</version>
+        	<version>3.1.2-SNAPSHOT</version>
 		</dependency>
 		
 		<dependency>
@@ -75,12 +75,12 @@
             <scope>test</scope>
             <type>tar.gz</type>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <version>${slf4j.version}</version>
             <scope>test</scope>
-        </dependency>
+        </dependency>-->
         <!-- Required to use shell commands in the tests -->
         <dependency>
             <groupId>org.apache.karaf.shell</groupId>
