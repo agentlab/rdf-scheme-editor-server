@@ -1,10 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2015 Eclipse RDF4J contributors.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Distribution License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/org/documents/edl-v10.php.
- *******************************************************************************/
 package ru.agentlab.rdf4j.jaxrs.repository;
 
 import java.util.ArrayList;
@@ -21,9 +14,9 @@ import javax.ws.rs.core.UriInfo;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.query.algebra.evaluation.QueryBindingSet;
 import org.eclipse.rdf4j.query.impl.IteratingTupleQueryResult;
-import org.eclipse.rdf4j.repository.RepositoryException;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
@@ -38,7 +31,6 @@ import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
  *
  */
 @Component(service = RepositoryListController.class, property = { "osgi.jaxrs.resource=true" })
-//@Path("/rdf4j-server")
 public class RepositoryListController {
 	private static final Logger logger = LoggerFactory.getLogger(RepositoryListController.class);
 
@@ -49,19 +41,20 @@ public class RepositoryListController {
 	@Path("/repositories")
     @Produces({"application/json", "application/sparql-results+json"})
     public TupleQueryResultModel list(@Context UriInfo uriInfo) throws WebApplicationException {
-		ValueFactory vf = SimpleValueFactory.getInstance();
-
-		List<BindingSet> bindingSets = new ArrayList<>();
-		List<String> bindingNames = new ArrayList<>();
+        // Determine the repository's URI
+        StringBuffer requestURL = new StringBuffer(uriInfo.getPath());
+        if (requestURL.charAt(requestURL.length() - 1) != '/') {
+            requestURL.append('/');
+        }
+        String namespace = "https://agentlab.ru/rdf4j-server/repositories/";//requestURL.toString();
+        System.out.println("namespace=" + namespace);
+        
+        TupleQueryResult queryResult = null;
 
 		try {
-			// Determine the repository's URI
-			StringBuffer requestURL = new StringBuffer(uriInfo.getPath());
-			if (requestURL.charAt(requestURL.length() - 1) != '/') {
-				requestURL.append('/');
-			}
-			String namespace = "https://agentlab.ru/rdf4j-server/repositories/";//requestURL.toString();
-			System.out.println("namespace=" + namespace);
+		    ValueFactory vf = SimpleValueFactory.getInstance();
+		    List<BindingSet> bindingSets = new ArrayList<>();
+		    List<String> bindingNames = new ArrayList<>();
 
 			repositoryManager.getAllRepositoryInfos(false).forEach(info -> {
 				QueryBindingSet bindings = new QueryBindingSet();
@@ -80,13 +73,13 @@ public class RepositoryListController {
 			bindingNames.add("title");
 			bindingNames.add("readable");
 			bindingNames.add("writable");
-		} catch (RepositoryException e) {
+			queryResult = new IteratingTupleQueryResult(bindingNames, bindingSets);
+		} catch (Exception e) {
 			logger.error("Repository list query error", e);
 			throw new WebApplicationException("Repository list query error: " + e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
 		}
-
 		TupleQueryResultModel queryResultModel = new TupleQueryResultModel();
-		queryResultModel.put("queryResult", new IteratingTupleQueryResult(bindingNames, bindingSets));
+		queryResultModel.put("queryResult", queryResult);
 		return queryResultModel;
     }
 }

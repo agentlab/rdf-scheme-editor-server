@@ -5,7 +5,6 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.ws.rs.DELETE;
@@ -19,26 +18,24 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 
 import org.eclipse.rdf4j.RDF4JException;
-import org.eclipse.rdf4j.model.Literal;
-import org.eclipse.rdf4j.model.Namespace;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.query.BindingSet;
-import org.eclipse.rdf4j.query.impl.ListBindingSet;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.query.algebra.evaluation.QueryBindingSet;
+import org.eclipse.rdf4j.query.impl.IteratingTupleQueryResult;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.eclipse.rdf4j.repository.RepositoryException;
-import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ru.agentlab.rdf4j.jaxrs.ServerHTTPException;
+import ru.agentlab.rdf4j.jaxrs.sparql.providers.TupleQueryResultModel;
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
 @Component(service = NamespacesController.class, property = { "osgi.jaxrs.resource=true" })
-//@Path("/rdf4j-server")
 public class NamespacesController {
     private static final Logger logger = LoggerFactory.getLogger(NamespacesController.class);
 
@@ -48,44 +45,39 @@ public class NamespacesController {
     @GET
     @Path("/repositories/{repId}/namespaces")
     @Produces({ "application/json", "application/sparql-results+json" })
-    public List<BindingSet>/* TupleQueryResult */ get(@Context UriInfo uriInfo, @PathParam("repId") String repId, @QueryParam("context") Resource[] context) throws RDF4JException, IOException, ServerHTTPException {
+    public TupleQueryResultModel get(@Context UriInfo uriInfo, @PathParam("repId") String repId, @QueryParam("context") Resource[] context) throws RDF4JException, IOException, ServerHTTPException {
         Repository repository = repositoryManager.getRepository(repId);
         if (repository == null)
             throw new WebApplicationException("Repository with id=" + repId + " not found", NOT_FOUND);
 
-        List<String> columnNames = Arrays.asList("prefix", "namespace");
-        List<BindingSet> namespaces = new ArrayList<>();
+        RepositoryConnection repositoryCon = repository.getConnection();
+        if (repositoryCon == null)
+            throw new WebApplicationException("Cannot connect to repository with id=" + repId, INTERNAL_SERVER_ERROR);
 
-        // ValueFactory vf = SimpleValueFactory.getInstance();
-        // Literal prefix = vf.createLiteral("ddd");
-        // Literal namespace = vf.createLiteral("http://rrr.tu/678");
+        TupleQueryResult queryResult = null;
 
-        // BindingSet bindingSet = new ListBindingSet(columnNames, prefix, namespace);
-        // namespaces.add(bindingSet);
-
-        try (RepositoryConnection repositoryCon = repository.getConnection()) {
-            System.out.println("Hello");
+        try {
             final ValueFactory vf = repositoryCon.getValueFactory();
-            try {
-                try (RepositoryResult<Namespace> iter = repositoryCon.getNamespaces()) {
-                    while (iter.hasNext()) {
-                        Namespace ns = iter.next();
-                        Literal prefix = vf.createLiteral(ns.getPrefix());
-                        Literal namespace = vf.createLiteral(ns.getName());
-                        BindingSet bindingSet = new ListBindingSet(columnNames, prefix, namespace);
-                        namespaces.add(bindingSet);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            } catch (RepositoryException e) {
-                e.printStackTrace();
-                throw new WebApplicationException("Repository error: " + e.getMessage(), INTERNAL_SERVER_ERROR);
-            }
+            List<BindingSet> bindingSets = new ArrayList<>();
+            List<String> bindingNames = new ArrayList<>();
+            
+            repositoryCon.getNamespaces().forEach(ns -> {
+                QueryBindingSet bindings = new QueryBindingSet();
+                bindings.addBinding("prefix", vf.createLiteral(ns.getPrefix()));
+                bindings.addBinding("namespace", vf.createLiteral(ns.getName()));
+                bindingSets.add(bindings);
+            });
+            bindingNames.add("prefix");
+            bindingNames.add("namespace");
+            queryResult = new IteratingTupleQueryResult(bindingNames, bindingSets);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Namespaces error for repository=" + repId, e);
+            throw new WebApplicationException("Repository error: " + e.getMessage(), INTERNAL_SERVER_ERROR);
         }
-        return namespaces;// new IteratingTupleQueryResult(columnNames, namespaces);
+        TupleQueryResultModel queryResultModel = new TupleQueryResultModel();
+        queryResultModel.put("queryResult", queryResult);
+        queryResultModel.put("connection", repositoryCon);
+        return queryResultModel;
     }
 
     @DELETE
@@ -93,7 +85,7 @@ public class NamespacesController {
     @Produces({ "application/json", "application/sparql-results+xml" })
     public void remove(@PathParam("repId") String repId) throws ServerHTTPException {
         Repository repository = repositoryManager.getRepository(repId);
-        try (RepositoryConnection repositoryCon = repository.getConnection()){
+        try (RepositoryConnection repositoryCon = repository.getConnection()) {
             repositoryCon.clearNamespaces();
         } catch (Exception e) {
             throw new WebApplicationException("Repository error: " + e.getMessage(), INTERNAL_SERVER_ERROR);

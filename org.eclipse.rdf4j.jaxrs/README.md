@@ -6,15 +6,11 @@ JAX-RS OSGi HTTP Whiteboard version of RDF4J server (with Sparql Endpoint and ot
 
 Перейти в подкаталог org.eclipse.rdf4j.jaxrs и выполнить из него компиляцию с прогоном тестов
 
-```
-mvn clean install
-```
+`mvn clean install`
 
 Компиляция без прогона тестов (отрабатывает быстрее)
 
-```
-mvn clean install -P quick
-```
+`mvn clean install -P quick`
 
 ## Запустить Karaf
 
@@ -55,6 +51,10 @@ https://karaf.apache.org/get-started.html
 * `log:set DEBUG` -- установка фильтра логов в подробный режим
 
 Пересборка и запуск одного тестового класса
+
+Запуск одного теста не приводит к пересборке тестируемого плагина! Для того, чтобы изменения в плагинах подхватились интеграционными тестами, сначала надо собрать плагины: 
+
+`mvn clean install -P quick`
 
 * OSGi тесты
   * без отладчика `mvn clean test -pl ru.agentlab.rdf4j.jaxrs.tests -Dtest=StatementsControllerTest`

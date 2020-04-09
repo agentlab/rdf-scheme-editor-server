@@ -60,8 +60,8 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
     String TWO_TRIPLE_ADDRESS;
     String address;
 
-    String file = "/testcases/default-graph-1.ttl";
-    RDFFormat dataFormat = Rio.getParserFormatForFileName(file).orElse(RDFFormat.RDFXML);
+    static String file = "/testcases/default-graph-1.ttl";
+    static RDFFormat dataFormat = Rio.getParserFormatForFileName(file).orElse(RDFFormat.RDFXML);
 
     String repId;
     Repository repository;
@@ -127,7 +127,7 @@ public class StatementsControllerTest extends Rdf4jJaxrsTestSupport2 {
         repositoryCon.close();
     }
 
-    public WebClient webClientCreator(String myAddress){
+    public static WebClient webClientCreator(String myAddress){
         WebClient client = WebClient.create(myAddress);
         client.type(dataFormat.getDefaultMIMEType());
         client.accept(MediaType.WILDCARD);

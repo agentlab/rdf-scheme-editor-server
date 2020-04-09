@@ -218,8 +218,7 @@ public class Rdf4jJaxrsTestSupport2 {
                 KarafDistributionOption.editConfigurationFilePut("etc/org.apache.karaf.shell.cfg", "sshPort", sshPort),
                 KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg", "org.ops4j.pax.url.mvn.localRepository", localRepository),
                 // add agentlab maven repositories for feature resolution
-                KarafDistributionOption.editConfigurationFileExtend("etc/org.ops4j.pax.url.mvn.cfg", "org.ops4j.pax.url.mvn.repositories", "https://agentlab.ru/nexus/repository/maven-releases"),
-                KarafDistributionOption.editConfigurationFileExtend("etc/org.ops4j.pax.url.mvn.cfg", "org.ops4j.pax.url.mvn.repositories", "https://agentlab.ru/nexus/repository/maven-snapshots@snapshots"),
+                KarafDistributionOption.editConfigurationFileExtend("etc/org.ops4j.pax.url.mvn.cfg", "org.ops4j.pax.url.mvn.repositories", "https://agentlab.ru/nexus/repository/maven-releases,https://agentlab.ru/nexus/repository/maven-snapshots@snapshots"),
                 KarafDistributionOption.editConfigurationFilePut("etc/branding.properties", "welcome", ""), // No welcome banner
                 KarafDistributionOption.editConfigurationFilePut("etc/branding-ssh.properties", "welcome", ""),
                 new VMOption("--add-reads=java.xml=java.logging"),
@@ -274,8 +273,7 @@ public class Rdf4jJaxrsTestSupport2 {
                 KarafDistributionOption.editConfigurationFilePut("etc/org.apache.karaf.shell.cfg", "sshPort", sshPort),
                 KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.url.mvn.cfg", "org.ops4j.pax.url.mvn.localRepository", localRepository),
                 // add agentlab maven repositories for feature resolution
-                KarafDistributionOption.editConfigurationFileExtend("etc/org.ops4j.pax.url.mvn.cfg", "org.ops4j.pax.url.mvn.repositories", "https://agentlab.ru/nexus/repository/maven-releases"),
-                KarafDistributionOption.editConfigurationFileExtend("etc/org.ops4j.pax.url.mvn.cfg", "org.ops4j.pax.url.mvn.repositories", "https://agentlab.ru/nexus/repository/maven-snapshots@snapshots@noreleases"),
+                KarafDistributionOption.editConfigurationFileExtend("etc/org.ops4j.pax.url.mvn.cfg", "org.ops4j.pax.url.mvn.repositories", "https://agentlab.ru/nexus/repository/maven-releases,https://agentlab.ru/nexus/repository/maven-snapshots@snapshots"),
                 KarafDistributionOption.editConfigurationFilePut("etc/branding.properties", "welcome", ""), // No welcome banner
                 KarafDistributionOption.editConfigurationFilePut("etc/branding-ssh.properties", "welcome", "")
             };

@@ -74,7 +74,6 @@ import ru.agentlab.rdf4j.jaxrs.sparql.providers.StatementsResultModel;
 import ru.agentlab.rdf4j.jaxrs.util.HttpServerUtil;
 import ru.agentlab.rdf4j.repository.RepositoryManagerComponent;
 
-//@Path("/rdf4j-server")
 @Component(service=StatementsController.class, property={"osgi.jaxrs.resource=true"})
 public class StatementsController {
 	private static final Logger logger = LoggerFactory.getLogger(StatementsController.class);
